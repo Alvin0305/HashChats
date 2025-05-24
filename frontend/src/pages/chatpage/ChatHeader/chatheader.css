@@ -1,0 +1,34 @@
+.chat-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 10px;
+    background-color: var(--color-tertiary);
+}
+
+.chat-header-img-name-div {
+    display: flex;
+    align-items: center;
+}
+
+.chat-header-name {
+    margin: 0;
+    margin-left: 10px;
+    text-transform: uppercase;
+}
+
+.chat-header-icons-div {
+    display: flex;
+    align-items: center;
+}
+
+.chat-header-icon {
+    padding: 10px;
+    margin: 0 10px;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.chat-header-icon:hover {
+    transform: scale(1.2);
+}

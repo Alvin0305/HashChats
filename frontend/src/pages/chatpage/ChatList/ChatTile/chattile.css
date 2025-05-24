@@ -1,0 +1,28 @@
+.chat-tile {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    justify-content: space-between;
+    padding: 10px;
+    border-radius: 5px;
+    box-sizing: border-box;
+    cursor: pointer;
+}
+
+.selected-chat-tile .chat-tile-name {
+    color: var(--color-primary);
+}
+
+.chat-tile:hover {
+    background-color: var(--color-hover);
+}
+
+.chat-avatar-name-div {
+    display: flex;
+    align-items: center;
+}
+
+.chat-tile-name {
+    margin-left: 10px;
+    text-transform: uppercase;
+}

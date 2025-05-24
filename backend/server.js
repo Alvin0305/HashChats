@@ -1,0 +1,69 @@
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import http from "http";
+import { Server } from "socket.io";
+import path, { dirname } from "path";
+import { fileURLToPath } from "url";
+
+import authRoutes from "./routes/authRoutes.js";
+import chatRoutes from "./routes/chatRoutes.js";
+import messageRoutes from "./routes/messageRoutes.js";
+import pool from "./db.js";
+import { configureSockets } from "./socket.js";
+
+dotenv.config();
+
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"],
+  },
+});
+
+// middle wares
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// file upload
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+app.use("/upload", express.static(path.join(__dirname, "uploads")));
+
+// socket.io
+configureSockets(io);
+
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
+
+// routes
+app.use("/api/auth", authRoutes);
+app.use("/api/chats", chatRoutes);
+app.use("/api/messages", messageRoutes);
+
+const PORT = process.env.PORT;
+server.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
+
+/*
+id (PK)
+username
+email
+password_hash
+avatar_url
+is_online (boolean)
+last_seen_at (timestamp)
+theme_preference (JSONB) -- stores user-specific theme settings
+created_at (timestamp)
+*/

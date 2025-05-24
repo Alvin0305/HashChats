@@ -1,0 +1,21 @@
+@import './styles/variables.css';
+
+html, body {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: black;
+    color: #ddd;
+    font-family: var(--font-text);
+}
+
+.avatar {
+    border-radius: 50%;
+}
+
+.m0 {
+    margin: 0;
+}

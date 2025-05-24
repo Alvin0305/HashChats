@@ -1,0 +1,100 @@
+.message {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    position: relative;
+}
+
+.message-sent {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.sent-message-avatar {
+    order: 2;
+}
+
+.message-wrapper {
+    background-color: var(--color-tertiary);
+    padding: 10px;
+    border-radius: 5px;
+    box-sizing: border-box;
+    max-width: 60%;
+}
+
+.message-username {
+    text-transform: uppercase;
+    margin: 0;
+}
+
+.sent-message-username {
+    justify-self: flex-end;
+    margin-bottom: 5px;
+}
+
+.reply-tag {
+    background-color: var(--color-highlight);
+    padding: 5px;
+    border-radius: 5px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.reply-tag-username {
+    text-transform: uppercase;
+}
+
+.message-text {
+    padding: 5px 0;
+}
+
+.message-time {
+    justify-self: flex-end;
+    margin-left: 40px;
+}
+
+.selected-for-reply-message {
+    border: 1px solid var(--color-primary);
+}
+
+.message-context-menu {
+    position: fixed;
+    background-color: var(--color-dark);
+    z-index: 999;
+    padding: 0;
+    list-style: none;
+    width: 150px;
+    border-radius: 5px;
+}
+
+.message-context-menu li {
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+.message-context-menu-item:first-child {
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+}
+
+.message-context-menu-item:last-child {
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+}
+
+.message-context-menu li:hover {
+    background-color: var(--color-highlight);
+}
+
+.deleted-tag {
+    color: var(--color-secondary);
+}
+
+.edited-tag {
+    justify-self: flex-end;
+    margin-bottom: 5px;
+    color: var(--color-secondary);
+}

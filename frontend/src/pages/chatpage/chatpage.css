@@ -1,0 +1,15 @@
+.chat-page {
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chat-page-wrapper {
+    display: flex;
+    width: 80%;
+    height: 80%;
+    justify-content: center;
+    align-items: center;
+}

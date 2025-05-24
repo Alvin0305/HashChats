@@ -1,0 +1,10 @@
+:root {
+    --font-text: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+    
+    --color-primary: #F31EE8;
+    --color-secondary: #F520F0;
+    --color-tertiary: #111;
+    --color-hover: #111;
+    --color-highlight: #333;
+    --color-dark: #050505;
+}

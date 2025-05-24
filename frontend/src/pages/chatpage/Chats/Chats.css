@@ -1,0 +1,22 @@
+.chats {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    gap: 10px;
+    padding: 10px;
+    overflow-y: auto;
+    box-sizing: border-box;
+    position: relative;
+}
+
+.pinned-message {
+    background-color: var(--color-dark);
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    top: 0;
+    position: sticky;
+    z-index: 10;
+    box-sizing: border-box;
+}
