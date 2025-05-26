@@ -21,6 +21,8 @@
     display: flex;
     gap: 5px;
     padding: 0 10px;
+    padding-right: 0;
+    margin-top: 5px;
 }
 
 .message-button {
@@ -48,10 +50,62 @@
     width: 100%;
     padding: 16px 10px;
     background-color: transparent;
-    border: 1px solid gray;
+    border: 1px solid var(--color-primary);
     margin-bottom: 0;
     box-sizing: border-box;
     font-size: medium;
     color: white;
     border-radius: 5px;
+}
+
+.file-upload-label {
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .file-preview-container {
+    padding: 10px;
+    border-top: 1px solid var(--color-primary);
+    position: relative; 
+    background-color: var(--color-dark);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .file-preview-image {
+    max-width: 100px;
+    max-height: 100px;
+    border-radius: 5px;
+    margin-right: 10px;
+  }
+  
+  .file-preview-container p {
+    margin: 0;
+    font-size: 0.9em;
+    color: #555;
+  }
+  
+.clear-file-btn {
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.clear-file-btn {
+    color: var(--color-primary);
+}
+
+.clear-file-btn:hover {
+    transform: scale(1.4);
+}
+
+.reply-to-message-div {
+    display: flex;
+    justify-content: space-between;
+    padding: 20px;
+    background-color: var(--color-dark);
 }

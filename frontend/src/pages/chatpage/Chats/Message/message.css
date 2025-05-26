@@ -16,17 +16,36 @@
     order: 2;
 }
 
+.receive-message-avatar {
+    cursor: pointer;
+}
+
 .message-wrapper {
     background-color: var(--color-tertiary);
     padding: 10px;
-    border-radius: 5px;
+    border-radius: 16px;
     box-sizing: border-box;
     max-width: 60%;
+}
+
+.receive-message-wrapper {
+    border-top-left-radius: 0;
+}
+
+.sent-message-wrapper {
+    border-top-right-radius: 0;
+    background-color: var(--color-secondary);
+}
+
+.delete-message-wrapper {
+    color: white;
+    border-radius: 5px;
 }
 
 .message-username {
     text-transform: uppercase;
     margin: 0;
+    margin-bottom: 5px;
 }
 
 .sent-message-username {
@@ -41,6 +60,10 @@
     display: flex;
     flex-direction: column;
     gap: 5px;
+}
+
+.sent-reply-tag {
+    background-color: var(--color-reply);
 }
 
 .reply-tag-username {
@@ -89,12 +112,72 @@
     background-color: var(--color-highlight);
 }
 
-.deleted-tag {
-    color: var(--color-secondary);
+#sent-message-tag {
+    color: white;
+}
+
+.sent-message-tag {
+    color: white;
 }
 
 .edited-tag {
     justify-self: flex-end;
     margin-bottom: 5px;
     color: var(--color-secondary);
+}
+
+.recieved-message-tag {
+    justify-self: flex-start;
+}
+
+.message-tags {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.chat-image-file {
+    width: 300px;
+    height: auto;
+    border-radius: 16px;
+    cursor: pointer;
+}
+
+.image-in-reply {
+    width: 50px;
+}
+
+.chat-video-file {
+    width: 100%;
+    border-radius: 16px;
+}
+
+.chat-generic-file {
+    padding: 10px 15px;
+    background-color: var(--color-highlight);
+    border-radius: 8px;
+    display: inline-block; 
+    margin: 5px 0;
+  }
+  
+  .chat-generic-file a {
+    text-decoration: none;
+    color: #007bff;
+    font-weight: 500;
+  }
+  
+  .chat-generic-file a:hover {
+    text-decoration: underline;
+  }
+
+.chat-reply-image-file {
+    height: 50px;
+}
+
+.chat-reply-video-file {
+    height: 50px;
+}
+
+.chat-reply-generic-file a {
+    color: #007bff;
 }

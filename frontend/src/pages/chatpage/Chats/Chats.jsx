@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import "./Chats.css";
 import { useUser } from "../../../contexts/userContext";
 import Message from "./Message/Message";
 import { pinMessage, unpinMessage } from "../../../services/messageService";
 import { fetchPinnedMessageInChat } from "../../../services/chatService";
 import { FaMapPin, FaPinterest, FaTimes, FaUtensilSpoon } from "react-icons/fa";
+import { useChatList } from "../../../contexts/chatlistContext";
 
 const Chats = ({
   chat,
@@ -13,8 +14,10 @@ const Chats = ({
   replyTo,
   setReplyTo,
   setUpdateMessage,
+  setShowProfile
 }) => {
   const { user } = useUser();
+  const { chatlist } = useChatList();
 
   const [contextMenu, setContextMenu] = useState({
     visible: false,
@@ -22,6 +25,8 @@ const Chats = ({
     y: 0,
     message_id: null,
   });
+
+  const endOfChatRef = useRef(null);
 
   const [pinnedMessage, setPinnedMessage] = useState(null);
 
@@ -48,6 +53,15 @@ const Chats = ({
   };
 
   useEffect(() => {
+    endOfChatRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  useEffect(() => {
+    console.log("chat:", chat);
+    console.log("chatlist: ", chatlist);
+
+    console.log("scrolling to the end");
+
     const fetchPinnedMessage = async () => {
       try {
         const response = await fetchPinnedMessageInChat(chat.id, user.token);
@@ -88,8 +102,10 @@ const Chats = ({
           setContextMenu={setContextMenu}
           setPinnedMessage={handlePin}
           setUpdateMessage={setUpdateMessage}
+          setShowProfile={setShowProfile}
         />
       ))}
+      <div ref={endOfChatRef} />
     </div>
   );
 };

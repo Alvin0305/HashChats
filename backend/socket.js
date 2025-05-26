@@ -1,12 +1,97 @@
 import pool from "./db.js";
 
+const connectedUsers = new Map();
+
 export const configureSockets = (io) => {
   io.on("connection", (socket) => {
     console.log("user connected:", socket.id);
 
-    socket.on("join_chat", (chat_id) => {
+    socket.on("register_user", (userId) => {
+      connectedUsers.set(userId, socket.id);
+      console.log(`User ${userId} connected with socket ${socket.id}`);
+    });
+
+    // ------- chat socket connections ------------
+
+    socket.on("join_chat", async (chat_id, user_id) => {
       socket.join(`chat_${chat_id}`);
-      console.log(`User joined to chat_${chat_id}`);
+      console.log(`User ${user_id} joined to chat_${chat_id}`);
+
+      try {
+        console.log("trying to mark messages on joining chat");
+
+        const { rows } = await pool.query(
+          `
+          INSERT INTO message_seen (message_id, user_id)
+          SELECT m.id, $2 
+          FROM messages AS m
+              WHERE m.chat_id = $1
+              AND m.sender_id != $2
+              AND m.deleted = FALSE
+              AND NOT EXISTS (
+                  SELECT 1 FROM message_seen ms
+                  WHERE ms.message_id = m.id 
+                  AND ms.user_id = $2
+              )
+              ORDER BY m.created_at ASC
+              RETURNING *
+          `,
+          [chat_id, user_id]
+        );
+        console.log(`marked messages:`);
+        rows.forEach((row) => {
+          console.log(row);
+        });
+        io.to(`chat_${chat_id}`).emit("messages_read", {
+          chat_id,
+          reader_id: user_id,
+          messages: rows,
+        });
+      } catch (err) {
+        console.log("marking messages read on joining error");
+        console.log(err);
+      }
+    });
+
+    socket.on("read_messages", async ({ chat_id, reader_id }) => {
+      console.log(
+        `socket received read messages from ${reader_id} in ${chat_id}`
+      );
+
+      try {
+        const { rows } = await pool.query(
+          `
+          INSERT INTO message_seen (message_id, user_id)
+          SELECT m.id, $2 
+          FROM messages AS m
+              WHERE m.chat_id = $1
+              AND m.sender_id != $2
+              AND m.deleted = FALSE
+              AND NOT EXISTS (
+                  SELECT 1 FROM message_seen ms
+                  WHERE ms.message_id = m.id 
+                  AND ms.user_id = $2
+              )
+              ORDER BY m.created_at ASC
+              RETURNING *
+          `,
+          [chat_id, reader_id]
+        );
+
+        console.log("messages being marked read: ");
+        rows.forEach((row) => {
+          console.log(row);
+        });
+
+        io.to(`chat_${chat_id}`).emit("messages_read", {
+          chat_id,
+          reader_id,
+          messages: rows,
+        });
+      } catch (err) {
+        console.log("marking message failed");
+        console.log(err);
+      }
     });
 
     socket.on("typing", (chat_id) => {
@@ -20,9 +105,9 @@ export const configureSockets = (io) => {
     });
 
     socket.on("send_message", async (messageData) => {
-      console.log("sending message", messageData);
-
       const { chat_id, sender_id, text, file_url, reply_to } = messageData;
+
+      console.log("sending message", messageData, chat_id);
 
       try {
         const { rows } = await pool.query(
@@ -45,7 +130,9 @@ export const configureSockets = (io) => {
         }
         newMessage.reply_info = replyInfo;
 
-        io.to(`chat_${chat_id}`).emit("receive_message", { newMessage });
+        newMessage.seen_by = [];
+
+        io.to(`chat_${chat_id}`).emit("receive_message", newMessage, chat_id);
       } catch (err) {
         console.log(`Failed to send message:`);
         console.log(err);
@@ -56,26 +143,7 @@ export const configureSockets = (io) => {
       console.log("received message", msg);
     });
 
-    socket.on("mark_seen", async ({ chat_id, user_id }) => {
-      try {
-        await pool.query(
-          `
-            INSERT INTO message_seen (message_id, user_id, seen_at)
-            SELECT id, $1, NOW(),
-            FROM messages 
-            WHERE chat_id = $2
-            AND id NOT IN (
-                SELECT message_id FROM message_seen WHERE user_id = $1
-            )
-            `,
-          [user_id, chat_id]
-        );
-
-        io.to(`chat_${chat_id}`).emit("messages_seen", { chat_id, user_id });
-      } catch (err) {}
-    });
-
-    socket.on("update_message", async (message_id, chat_id,  text) => {
+    socket.on("update_message", async (message_id, chat_id, text) => {
       try {
         const { rows } = await pool.query(
           `UPDATE messages 
@@ -111,6 +179,91 @@ export const configureSockets = (io) => {
 
     socket.on("disconnect", () => {
       console.log("user diconnected:", socket.id);
+
+      for (const [userId, id] of connectedUsers.entries()) {
+        if (id === socket.id) {
+          connectedUsers.delete(userId);
+          console.log(`User ${userId} disconnected`);
+          break;
+        }
+      }
+    });
+
+    // ------- call socket connections -----------
+
+    socket.on("call_user", ({ calleeId, offer, from, call_type }) => {
+      const calleeSocketId = connectedUsers.get(calleeId);
+      console.log("calling user", calleeId);
+      if (calleeSocketId) {
+        io.to(calleeSocketId).emit("incoming_call", { from, offer });
+      }
+    });
+
+    socket.on(
+      "answer_call",
+      async ({ callerId, answer, calleeId, call_type }) => {
+        console.log("answered the call");
+        const callerSocketId = connectedUsers.get(callerId);
+        if (callerSocketId) {
+          io.to(callerSocketId).emit("call_answered", { answer });
+        }
+
+        try {
+          const { rows: existingCalls } = await pool.query(
+            `SELECT * FROM calls 
+             WHERE caller_id = $1 AND callee_id = $2 
+             AND call_type = $3 
+             AND end_time IS NULL`,
+            [callerId, calleeId, call_type]
+          );
+
+          if (existingCalls.length === 0) {
+            const { rows } = await pool.query(
+              `INSERT INTO calls (caller_id, callee_id, call_type)
+               VALUES ($1, $2, $3)
+               RETURNING *`,
+              [callerId, calleeId, call_type]
+            );
+            console.log("Call logged:", rows[0]);
+          }
+        } catch (err) {
+          console.log(err);
+        }
+      }
+    );
+
+    socket.on("ice_candidate", ({ to, candidate }) => {
+      console.log("ice candidate");
+      const targetSocketId = connectedUsers.get(to);
+      if (targetSocketId) {
+        io.to(targetSocketId).emit("ice_candidate", { candidate });
+      }
+    });
+
+    socket.on("call_ended", async ({ from, to }) => {
+      console.log("call ended");
+      const targetSocketId = connectedUsers.get(to);
+      const callerSocketId = connectedUsers.get(from);
+      console.log(targetSocketId);
+      if (targetSocketId) {
+        io.to(targetSocketId).emit("end_call");
+      }
+
+      console.log(callerSocketId);
+      if (callerSocketId) {
+        io.to(callerSocketId).emit("end_call");
+      }
+
+      try {
+        await pool.query(
+          `UPDATE calls 
+           SET end_time = NOW() 
+           WHERE caller_id = $1 AND callee_id = $2 AND end_time IS NULL`,
+          [from, to]
+        );
+      } catch (err) {
+        console.log("Failed to update call end time", err);
+      }
     });
   });
 };

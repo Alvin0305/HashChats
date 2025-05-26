@@ -1,5 +1,19 @@
 import axios from "./axiosInstance";
 
+export const uploadFileMessage = (formData, token) => {
+  axios.post("/api/messages/upload", formData, {
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": undefined },
+    withCredentials: true,
+  });
+};
+
+export const sendMessage = (messageData, token) => {
+  axios.post(`/api/messages/`, messageData, {
+    headers: { Authorization: `Bearer ${token}` },
+    withCredentials: true,
+  });
+};
+
 export const fetchMessages = (id, token) =>
   axios.get(`/api/messages/${id}`, {
     headers: { Authorization: `Bearer ${token}` },
@@ -36,6 +50,16 @@ export const updateMessageAPI = (id, token, text) =>
   axios.put(
     `/api/messages/${id}`,
     { text: text },
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      withCredentials: true,
+    }
+  );
+
+export const markAllMessagesReadByUserAPI = (id, token, chat_id, reader_id) =>
+  axios.post(
+    `/api/messages/${id}`,
+    { chat_id: chat_id, reader_id: reader_id },
     {
       headers: { Authorization: `Bearer ${token}` },
       withCredentials: true,

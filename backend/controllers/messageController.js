@@ -1,6 +1,8 @@
 import pool from "../db.js";
+import { getUnreadMessagesInChatByUser } from "../models/messageModel.js";
 
 export const sendMessage = async (req, res) => {
+  console.log(req.body);
   const sender_id = req.user.id;
   const { chat_id, text, file_url, reply_to } = req.body;
 
@@ -57,11 +59,21 @@ export const getMessages = async (req, res) => {
   try {
     const { rows } = await pool.query(
       `
-            SELECT m.*, u.id AS sender_id, u.avatar, u.username
-            FROM messages AS m
-            JOIN users AS u ON m.sender_id = u.id
-            WHERE m.chat_id = $1
-            ORDER BY m.created_at ASC`,
+      SELECT m.*, 
+      u.id AS sender_id, 
+      u.avatar, 
+      u.username,
+      COALESCE (
+        JSON_AGG(ms.user_id)
+        FILTER (WHERE ms.user_id IS NOT NULL),
+        '[]'
+      ) AS seen_by
+      FROM messages AS m
+      LEFT JOIN message_seen AS ms ON ms.message_id = m.id
+      JOIN users AS u ON m.sender_id = u.id
+      WHERE m.chat_id = $1
+      GROUP BY m.id, u.id
+      ORDER BY m.created_at ASC`,
       [chat_id]
     );
 
@@ -70,6 +82,11 @@ export const getMessages = async (req, res) => {
     console.log(err);
     res.status(500).json({ error: `Server error: ${err.message}` });
   }
+};
+
+export const markAllMessagesReadByUser = async (req, res) => {
+  const { chat_id, reader_id } = req.body;
+  getUnreadMessagesInChatByUser(chat_id, reader_id);
 };
 
 export const updateMessage = async (req, res) => {
@@ -183,6 +200,26 @@ export const unpinMessage = async (req, res) => {
       return res.status(404).json({ error: "Message not found" });
 
     res.json({ success: true, message: "Message Unpinned" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: `Server Error ${err.message}` });
+  }
+};
+
+export const markAsRead = async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user.id;
+
+  try {
+    const { rows } = await pool.query(
+      `INSERT INTO 
+      message_seen (message_id, user_id)  
+      VALUES ($1, $2)
+      RETURNING *`,
+      [id, userId]
+    );
+
+    res.json(rows[0]);
   } catch (err) {
     console.log(err);
     res.status(500).json({ error: `Server Error ${err.message}` });

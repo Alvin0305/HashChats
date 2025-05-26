@@ -9,6 +9,8 @@ import { fileURLToPath } from "url";
 import authRoutes from "./routes/authRoutes.js";
 import chatRoutes from "./routes/chatRoutes.js";
 import messageRoutes from "./routes/messageRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
+
 import pool from "./db.js";
 import { configureSockets } from "./socket.js";
 
@@ -50,6 +52,7 @@ app.use((req, res, next) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/chats", chatRoutes);
 app.use("/api/messages", messageRoutes);
+app.use("/api/user", userRoutes);
 
 const PORT = process.env.PORT;
 server.listen(PORT, () => {
@@ -57,13 +60,9 @@ server.listen(PORT, () => {
 });
 
 /*
-id (PK)
-username
-email
-password_hash
-avatar_url
-is_online (boolean)
-last_seen_at (timestamp)
-theme_preference (JSONB) -- stores user-specific theme settings
-created_at (timestamp)
+API_SECRET=FPhX3r_MGxpW439s3oqyxqaMI3Q
+API_KEY=228197764699448
+CLOUDINARY_URL=cloudinary://228197764699448:FPhX3r_MGxpW439s3oqyxqaMI3Q@duki8udfb
+UPLOAD_PRESET_NAME=hashchat_files
+ASSET_FOLDER=hashchats
 */

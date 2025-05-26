@@ -7,6 +7,13 @@ export const findUserByEmail = async (email) => {
   return rows[0];
 };
 
+export const findUserById = async (id) => {
+  const { rows } = await pool.query(`SELECT * FROM users WHERE id = $1`, [
+    id,
+  ]);
+  return rows[0];
+};
+
 export const createUser = async (username, email, password_hash) => {
   const { rows } = await pool.query(
     `INSERT INTO users (username, email, password_hash)

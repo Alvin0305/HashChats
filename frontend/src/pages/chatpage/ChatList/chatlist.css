@@ -2,4 +2,71 @@
     width: 300px;
     border-right: 1px solid gray;
     height: 100%;
+    position: relative;
+}
+
+.add-chat-button {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    background-color: transparent;
+    border: 1px solid var(--color-primary);
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background-color 0.2s ease-in-out;
+    cursor: pointer;
+}
+
+.add-chat-button:hover {
+    background-color: var(--color-primary);
+}
+
+.add-chat-button:hover .add-chat-icon {
+    color: black;
+}
+
+.add-chat-icon {
+    color: var(--color-primary);
+}
+
+.add-user-dialog {
+    margin: 10px;
+    border-radius: 5px;
+    background-color: var(--color-hover);
+    padding: 10px;
+}
+
+.add-user-form {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+}
+
+.email-input {
+    box-sizing: border-box;
+    width: 100%;
+    border: 1px solid var(--color-primary);
+    background-color: transparent;
+    color: white;
+    padding: 20px 10px;
+    font-size: medium;
+}
+
+.add-user-button {
+    background-color: transparent;
+    border: 1px solid var(--color-primary);
+    padding: 10px;
+    font-size: medium;
+    color: white;
+    cursor: pointer;
+}
+
+.add-user-buttons {
+    display: flex;
+    gap: 10px;
 }

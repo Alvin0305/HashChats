@@ -26,7 +26,19 @@ export const createChat = async (req, res) => {
       [chat_id, ...allUserIds]
     );
 
-    res.status(201).json(chatRows[0]);
+    const { rows: output } = await pool.query(
+      `
+      SELECT c.*, json_agg(u.*) AS members
+      FROM chats c
+      JOIN chat_members cm ON cm.chat_id = c.id
+      JOIN users u ON u.id = cm.user_id
+      WHERE c.id = $1
+      GROUP BY c.id`,
+      [chat_id]
+    );
+    console.log(output);
+
+    res.status(201).json(output[0]);
   } catch (err) {
     console.log(err);
     res.status(500).json({ error: `Server error ${err.message}` });
@@ -74,5 +86,25 @@ export const getPinnedMessage = async (req, res) => {
   } catch (err) {
     console.log(err);
     res.status(500).json({ error: `Server error: ${err.message}` });
+  }
+};
+
+export const fetchMediaInChat = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { rows } = await pool.query(
+      `SELECT * FROM messages
+      WHERE chat_id = $1
+      AND file_url IS NOT NULL
+      ORDER BY created_at DESC`,
+      [id]
+    );
+
+    console.log(rows);
+    res.json(rows);
+  } catch (err) {
+    res
+      .status(500)
+      .json({ error: `fetching media failed due to ${err.message}` });
   }
 };

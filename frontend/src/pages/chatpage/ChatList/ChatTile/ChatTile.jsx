@@ -6,7 +6,8 @@ import { useChat } from "../../../../contexts/chatContext";
 const ChatTile = ({ user, chat }) => {
   const getDisplayName = () => {
     if (chat.is_group) return chat.name;
-    return chat.members.filter((m) => m.username != user.username)[0].username;
+    // console.log(chat);
+    return chat.members?.find((m) => m.username !== user.username).username;
   };
 
   const iconWidth = 40;
@@ -14,7 +15,7 @@ const ChatTile = ({ user, chat }) => {
   const getAvatar = () => {
     if (chat.is_group) return chat.image;
     return (
-      chat.members.filter((m) => m.username != user.username)[0].avatar ||
+      chat.members?.find((m) => m.username != user.username).avatar ||
       "/avatar.webp"
     );
   };
@@ -22,8 +23,7 @@ const ChatTile = ({ user, chat }) => {
   const getStatus = () => {
     if (chat.is_group) return false;
     return (
-      chat.members.filter((m) => m.username != user.username)[0].status ===
-      "online"
+      chat.members?.find((m) => m.username != user.username).status === "online"
     );
   };
 
@@ -34,7 +34,7 @@ const ChatTile = ({ user, chat }) => {
       className={`chat-tile ${
         selectedChat && selectedChat.id === chat.id ? "selected-chat-tile" : ""
       }`}
-      onClick={() => setChat(chat)}
+      onClick={() => {console.log("changing to:",chat);setChat(chat)}}
     >
       <div className="chat-avatar-name-div">
         <img

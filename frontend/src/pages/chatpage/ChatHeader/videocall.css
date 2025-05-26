@@ -1,0 +1,62 @@
+.video-call-container {
+    position: fixed;
+    top: 10%;
+    left: 10%;
+    width: 80%;
+    height: 80%;
+    background: #000;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+
+    gap: 30px;
+}
+
+.video-call-videos {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+}
+
+.video-local,
+.video-remote {
+    width: 45%;
+    height: auto;
+    border-radius: 10px;
+}
+
+.video-call-buttons-div {
+    padding: 20px;
+    border-radius: 5px;
+    display: flex;
+    gap: 10px;
+    border-radius: 50px;
+    width: 400px;
+    justify-content: space-evenly;
+    background-color: var(--color-highlight);
+}
+
+.video-call-button {
+    padding: 20px;
+    border: 1px solid var(--color-secondary);
+    border-radius: 50%;
+    background-color: transparent;
+    transition: all 0.2s ease-in-out;
+    cursor: pointer;
+}
+
+.video-call-button:hover {
+    background-color: var(--color-secondary);
+}
+
+.video-call-button:hover .video-call-icon {
+    color: white;
+}
+
+.video-call-icon {
+    /* color: red; */
+    transition: all 0.2s ease-in-out;
+}

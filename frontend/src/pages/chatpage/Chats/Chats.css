@@ -7,6 +7,16 @@
     overflow-y: auto;
     box-sizing: border-box;
     position: relative;
+    margin-top: 5px;
+}
+
+.chats::-webkit-scrollbar {
+    background-color: black;
+}
+
+.chats::-webkit-scrollbar-thumb {
+    background-color: var(--color-highlight);
+    border-radius: 5px;
 }
 
 .pinned-message {
