@@ -14,7 +14,6 @@ const Chats = ({
   replyTo,
   setReplyTo,
   setUpdateMessage,
-  setShowProfile
 }) => {
   const { user } = useUser();
   const { chatlist } = useChatList();
@@ -102,7 +101,6 @@ const Chats = ({
           setContextMenu={setContextMenu}
           setPinnedMessage={handlePin}
           setUpdateMessage={setUpdateMessage}
-          setShowProfile={setShowProfile}
         />
       ))}
       <div ref={endOfChatRef} />

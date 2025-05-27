@@ -1,16 +1,29 @@
 import React from "react";
 import "./chattile.css";
-import { FaCheck } from "react-icons/fa";
+import { FaCheck, FaDotCircle } from "react-icons/fa";
 import { useChat } from "../../../../contexts/chatContext";
+import { useTab } from "../../../../contexts/tabContext";
 
 const ChatTile = ({ user, chat }) => {
   const getDisplayName = () => {
     if (chat.is_group) return chat.name;
-    // console.log(chat);
     return chat.members?.find((m) => m.username !== user.username).username;
   };
 
   const iconWidth = 40;
+
+  const getUserLastSeen = () => {
+    if (chat.is_group) return "";
+    return `Last Seen: ${
+      new Date(
+        chat.members?.find((m) => m.username != user.username)?.last_seen_at
+      ).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      }) || "None"
+    }`;
+  };
 
   const getAvatar = () => {
     if (chat.is_group) return chat.image;
@@ -28,13 +41,18 @@ const ChatTile = ({ user, chat }) => {
   };
 
   const { chat: selectedChat, setChat } = useChat();
+  const { setCurrentTab } = useTab();
 
   return (
     <div
       className={`chat-tile ${
         selectedChat && selectedChat.id === chat.id ? "selected-chat-tile" : ""
       }`}
-      onClick={() => {console.log("changing to:",chat);setChat(chat)}}
+      onClick={() => {
+        console.log("changing to:", chat);
+        setCurrentTab("chat-room");
+        setChat(chat);
+      }}
     >
       <div className="chat-avatar-name-div">
         <img
@@ -45,7 +63,11 @@ const ChatTile = ({ user, chat }) => {
         />
         <h3 className="chat-tile-name">{getDisplayName()}</h3>
       </div>
-      {getStatus() ? <FaCheck size={20} color="green" /> : ""}
+      {getStatus() ? (
+        <FaDotCircle size={8} color="green" />
+      ) : (
+        <h5>{getUserLastSeen()}</h5>
+      )}
     </div>
   );
 };

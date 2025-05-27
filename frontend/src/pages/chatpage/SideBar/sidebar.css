@@ -1,0 +1,37 @@
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    height: 100%;
+    background-color: var(--color-dark);
+    border-right: 1px solid gray;
+}
+
+.sidebar-div {
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-div:first-child {
+    border-bottom: 1px solid gray;
+}
+
+.sidebar-div:last-child {
+    border-top: 1px solid gray;
+}
+
+.sidebar-button {
+    padding: 20px;
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+.sidebar-button:hover {
+    background-color: var(--color-hover);
+}
+
+.sidebar-icon {
+    color: white;
+}

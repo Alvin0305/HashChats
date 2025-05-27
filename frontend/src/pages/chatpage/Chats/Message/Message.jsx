@@ -16,7 +16,6 @@ const Message = ({
   setContextMenu,
   setPinnedMessage,
   setUpdateMessage,
-  setShowProfile,
 }) => {
   const isSent = message.sender_id === user.id;
 
@@ -49,7 +48,7 @@ const Message = ({
 
   const getUserName = () => {
     if (isSent) return "You";
-    return chat.members.find((m) => m.id === message.sender_id).username;
+    return chat.members.find((m) => m.id === message.sender_id)?.username;
   };
 
   const getUserAvatar = () => {
@@ -118,9 +117,6 @@ const Message = ({
         className={`avatar message-avatar ${
           isSent ? "sent-message-avatar" : "receive-message-avatar"
         }`}
-        onClick={() => {
-          !chat.is_group && setShowProfile(true);
-        }}
       />
       <div
         className={`message-wrapper ${

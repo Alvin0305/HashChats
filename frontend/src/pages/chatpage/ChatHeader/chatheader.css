@@ -9,6 +9,21 @@
 .chat-header-img-name-div {
     display: flex;
     align-items: center;
+    cursor: pointer;
+    gap: 5px;
+}
+
+.chat-back-button {
+    background-color: transparent;
+    border: none;
+}
+
+.show-on-phone {
+    display: none;
+}
+
+.chat-back-icon {
+    color: white;
 }
 
 .chat-header-name {

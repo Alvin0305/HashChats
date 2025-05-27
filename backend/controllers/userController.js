@@ -1,3 +1,4 @@
+import pool from "../db.js";
 import { findUserByEmail, findUserById } from "../models/userModel.js";
 
 export const getUserByEmail = async (req, res) => {
@@ -27,3 +28,18 @@ export const getUserById = async (req, res) => {
       .json({ error: `fetching user failed due to: ${err.message}` });
   }
 };
+
+export const updateUser = async (req, res) => {
+  const { id } = req.params;
+  const { description, name } = req.body;
+  try {
+    const { rows } = await pool.query(
+      `UPDATE users SET description = $1, username = $2 WHERE id = $3 RETURNING *`,
+      [description, name, id]
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: `update failed due to ${err.message}` });
+  }
+};
+

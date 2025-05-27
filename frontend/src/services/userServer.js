@@ -15,3 +15,20 @@ export const fetchUserById = (id, token) =>
     headers: { Authorization: `Bearer ${token}` },
     withCredentials: true,
   });
+
+export const updateUser = (id, description, name, token) =>
+  axios.put(
+    `/api/user/${id}`,
+    { description, name },
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      withCredentials: true,
+    }
+  );
+
+export const updateAvatar = (id, formData, token) => {
+  return axios.post(`/api/user/upload/${id}`, formData, {
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": undefined },
+    withCredentials: true,
+  });
+};

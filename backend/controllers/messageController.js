@@ -225,3 +225,30 @@ export const markAsRead = async (req, res) => {
     res.status(500).json({ error: `Server Error ${err.message}` });
   }
 };
+
+export const fetchAllMedia = async (req, res) => {
+  const { id } = req.params;
+  console.log(id);
+  try {
+    const { rows } = await pool.query(
+      `SELECT * FROM messages
+      WHERE file_url IS NOT NULL
+      AND (
+        sender_id = $1
+        OR chat_id IN (
+          SELECT chat_id FROM chat_members WHERE user_id = $1
+        )
+      )
+      ORDER BY created_at DESC`,
+      [id]
+    );
+
+    console.log(rows);
+    res.json(rows);
+  } catch (err) {
+    console.log(rows);
+    res
+      .status(500)
+      .json({ error: `fetching media failed due to ${err.message}` });
+  }
+};

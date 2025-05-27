@@ -2,6 +2,7 @@ import express from "express";
 import { protect } from "../middlewares/authMiddleware.js";
 import {
   deleteMessage,
+  fetchAllMedia,
   getMessage,
   getMessages,
   markAllMessagesReadByUser,
@@ -21,6 +22,7 @@ const router = express.Router();
 
 router.route("/").post(protect, sendMessage);
 router.get("/message/:message_id", protect, getMessage);
+router.get("/media/:id", protect, fetchAllMedia);
 router.get("/:chat_id", protect, getMessages);
 router.put("/:id", protect, updateMessage);
 router.delete("/:id", protect, deleteMessage);

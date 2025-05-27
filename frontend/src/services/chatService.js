@@ -27,3 +27,45 @@ export const fetchPinnedMessageInChat = (id, token) =>
     headers: { Authorization: `Bearer ${token}` },
     withCredentials: true,
   });
+
+export const addMemberToChat = (chat_id, email, token) =>
+  axios.post(
+    `/api/chats/add-member`,
+    { chat_id, email },
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      withCredentials: true,
+    }
+  );
+
+export const removeMemberFromChat = (chat_id, email, token) =>
+  axios.post(
+    `/api/chats/remove-member`,
+    { chat_id, email },
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      withCredentials: true,
+    }
+  );
+
+export const updateChat = (chat_id, description, name, token) =>
+  axios.put(
+    `/api/chats/${chat_id}`,
+    { description, name },
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      withCredentials: true,
+    }
+  );
+
+export const deleteAllMessagesInChat = (chat_id, token) =>
+  axios.delete(`/api/chats/${chat_id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    withCredentials: true,
+  });
+
+export const fetchUserGroups = (token) =>
+  axios.get(`/api/chats/groups`, {
+    headers: { Authorization: `Bearer ${token}` },
+    withCredentials: true,
+  });

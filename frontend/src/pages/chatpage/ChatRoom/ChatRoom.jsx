@@ -12,8 +12,9 @@ import {
 } from "../../../services/messageService";
 import socket from "../../../sockets";
 import { toast } from "react-toastify";
+import { useTab } from "../../../contexts/tabContext";
 
-const ChatRoom = ({ setShowProfile }) => {
+const ChatRoom = ({ setShowChatDetails }) => {
   const { chat, setChat } = useChat();
   const { user } = useUser();
 
@@ -51,6 +52,7 @@ const ChatRoom = ({ setShowProfile }) => {
   };
 
   useEffect(() => {
+    if (!chat) return;
     const fetchChats = async () => {
       try {
         // console.log(chat);
@@ -216,11 +218,25 @@ const ChatRoom = ({ setShowProfile }) => {
     return false;
   };
 
+  const { currentTab } = useTab();
+
+  if (!user) return <div>Loading...</div>;
+
   return (
-    <div className="chat-room">
+    <div
+      className={`chat-room ${
+        currentTab === "chat-room"
+          ? "show-in-phone-tab"
+          : "dont-show-in-phone-tab"
+      }`}
+    >
       {chat ? (
         <div className="chat-box">
-          <ChatHeader user={user} chat={chat} />
+          <ChatHeader
+            user={user}
+            chat={chat}
+            setShowChatDetails={setShowChatDetails}
+          />
           <Chats
             chat={chat}
             messages={messages}
@@ -228,7 +244,6 @@ const ChatRoom = ({ setShowProfile }) => {
             replyTo={replyTo}
             setReplyTo={setReplyTo}
             setUpdateMessage={setUpdateMessage}
-            setShowProfile={setShowProfile}
           />
           {filePreview && (
             <div className="file-preview-container">

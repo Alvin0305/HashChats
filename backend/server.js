@@ -10,6 +10,7 @@ import authRoutes from "./routes/authRoutes.js";
 import chatRoutes from "./routes/chatRoutes.js";
 import messageRoutes from "./routes/messageRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import favouritesRoutes from "./routes/favouritesRoutes.js";
 
 import pool from "./db.js";
 import { configureSockets } from "./socket.js";
@@ -53,6 +54,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/chats", chatRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/user", userRoutes);
+app.use("/api/favourites", favouritesRoutes);
 
 const PORT = process.env.PORT;
 server.listen(PORT, () => {

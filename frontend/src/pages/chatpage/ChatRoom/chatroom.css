@@ -9,6 +9,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    height: 100%;
 }
 
 .chat-box {
@@ -108,4 +109,18 @@
     justify-content: space-between;
     padding: 20px;
     background-color: var(--color-dark);
+}
+
+@media (max-width: 568px) {
+    .show-in-phone-tab {
+        display: block;
+    }
+
+    .show-on-phone {
+        display: block;
+    }
+
+    .dont-show-in-phone-tab {
+        display: none;
+    }
 }

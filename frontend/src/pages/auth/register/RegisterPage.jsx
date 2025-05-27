@@ -19,7 +19,7 @@ const RegisterPage = () => {
 
     try {
       const response = await registerUser(userData);
-      setUser(response.data.user);
+      setUser(response.data);
       console.log(response.data);
       navigate("/chat");
     } catch (err) {

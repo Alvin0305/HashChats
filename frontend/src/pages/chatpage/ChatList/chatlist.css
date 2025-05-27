@@ -1,36 +1,66 @@
 .chatlist {
-    width: 300px;
+    width: 440px;
     border-right: 1px solid gray;
     height: 100%;
     position: relative;
+    overflow-y: auto;
+}
+
+.chatlist::-webkit-scrollbar {
+    background-color: black;
+}
+
+.chatlist::-webkit-scrollbar-thumb {
+    background-color: var(--color-highlight);
+    border-radius: 5px;
+}
+
+.chatlist-top {
+    display: flex;
+    padding: 20px;
+    align-items: center;
+    gap: 20px;
+    border-bottom: 1px solid gray;
+}
+
+.logout-button {
+    background-color: transparent;
+    border: none;
+    padding: 5px;
+    padding-left: 0;
+    cursor: pointer;
+}
+
+.logout-icon {
+    color: white;
+}
+
+.logout-button:hover .logout-icon {
+    color: var(--color-primary);
 }
 
 .add-chat-button {
-    position: absolute;
+    position: sticky;
     bottom: 10px;
-    left: 10px;
-    background-color: transparent;
-    border: 1px solid var(--color-primary);
+    left: 80%;
+    background-color: var(--color-primary);
+    border: none;
     border-radius: 50%;
     width: 60px;
     height: 60px;
     display: flex;
     justify-content: center;
     align-items: center;
-    transition: background-color 0.2s ease-in-out;
+    transition: all 0.2s ease-in-out;
     cursor: pointer;
 }
 
 .add-chat-button:hover {
-    background-color: var(--color-primary);
-}
-
-.add-chat-button:hover .add-chat-icon {
-    color: black;
+    transform: translateY(-4px);
 }
 
 .add-chat-icon {
-    color: var(--color-primary);
+    color: var(--color-dark);
 }
 
 .add-user-dialog {
@@ -47,6 +77,12 @@
     gap: 10px;
 }
 
+.is-group-div {
+    display: flex;
+    align-items: center;
+    gap: 10;
+}
+
 .email-input {
     box-sizing: border-box;
     width: 100%;
@@ -55,9 +91,17 @@
     color: white;
     padding: 20px 10px;
     font-size: medium;
+    border-radius: 5px;
+}
+
+.add-group-check-box {
+    width: 24px;
+    height: 24px;
+    accent-color: var(--color-primary);
 }
 
 .add-user-button {
+    border-radius: 5px;
     background-color: transparent;
     border: 1px solid var(--color-primary);
     padding: 10px;

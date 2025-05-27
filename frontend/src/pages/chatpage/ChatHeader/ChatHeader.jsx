@@ -1,13 +1,22 @@
 import React, { useEffect, useState } from "react";
-import { FaPhone, FaPhoneAlt, FaPhoneSlash, FaVideo } from "react-icons/fa";
+import {
+  FaBackspace,
+  FaBackward,
+  FaPhone,
+  FaPhoneAlt,
+  FaPhoneSlash,
+  FaVideo,
+} from "react-icons/fa";
 
 import "./chatheader.css";
 import VideoCall from "./VideoCall";
 import socket from "../../../sockets";
 import { fetchUserById } from "../../../services/userServer";
 import AudioCall from "./AudioCall";
+import { FiArrowLeft, FiSkipBack } from "react-icons/fi";
+import { useTab } from "../../../contexts/tabContext";
 
-const ChatHeader = ({ user, chat }) => {
+const ChatHeader = ({ user, chat, setShowChatDetails }) => {
   const getDisplayName = () => {
     if (chat.is_group) return chat.name;
     return chat.members.filter((m) => m.username != user.username)[0].username;
@@ -42,7 +51,7 @@ const ChatHeader = ({ user, chat }) => {
   const handleAudioCall = async () => {
     setShowAudioCall(true);
   };
-  
+
   const handleVideoCall = async () => {
     setShowVideoCall(true);
   };
@@ -86,9 +95,25 @@ const ChatHeader = ({ user, chat }) => {
     socket.emit("call_ended", { from: incomingCallerId, to: user.id });
   };
 
+  const { currentTab, setCurrentTab } = useTab();
+
+  if (!user) return <div>Loading...</div>;
+
   return (
     <div className="chat-header">
-      <div className="chat-header-img-name-div">
+      <div
+        className="chat-header-img-name-div"
+        onClick={() => {
+          setShowChatDetails(true);
+          setCurrentTab("chat-details")
+        }}
+      >
+        <button
+          className={`chat-back-button show-on-phone`}
+          onClick={() => setCurrentTab("chat-list")}
+        >
+          <FiArrowLeft className="chat-back-icon" size={24} />
+        </button>
         <img
           src={getAvatar()}
           alt="No internet"
@@ -98,7 +123,11 @@ const ChatHeader = ({ user, chat }) => {
         <h3 className="chat-header-name">{getDisplayName()}</h3>
       </div>
       <div className="chat-header-icons-div">
-        <FaPhone className="chat-header-icon" size={iconWidth} onClick={handleAudioCall} />
+        <FaPhone
+          className="chat-header-icon"
+          size={iconWidth}
+          onClick={handleAudioCall}
+        />
         <FaVideo
           className="chat-header-icon"
           size={iconWidth}

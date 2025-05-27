@@ -7,6 +7,13 @@ export const uploadFileMessage = (formData, token) => {
   });
 };
 
+export const fetchAllMedia = async (id, token) => {
+  return await axios.get(`/api/messages/media/${id}`, {
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": undefined },
+    withCredentials: true,
+  });
+};
+
 export const sendMessage = (messageData, token) => {
   axios.post(`/api/messages/`, messageData, {
     headers: { Authorization: `Bearer ${token}` },

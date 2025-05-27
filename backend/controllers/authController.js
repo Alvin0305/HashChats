@@ -15,8 +15,27 @@ const markAsOnline = async (userId) => {
   console.log(rows[0]);
 };
 
+export const markAsOffline = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { rows } = await pool.query(
+      `UPDATE users 
+        SET status = 'offline',
+        last_seen_at = NOW()
+        WHERE id = $1
+        RETURNING *`,
+      [id]
+    );
+    res.json({ message: "Successfully logged out" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
 export const registerUser = async (req, res) => {
   const { username, email, password } = req.body;
+  console.log(req.body);
 
   try {
     const existing = await findUserByEmail(email);
@@ -25,6 +44,7 @@ export const registerUser = async (req, res) => {
     const password_hash = await bcrypt.hash(password, 10);
     const user = await createUser(username, email, password_hash);
 
+    console.log("user: ", user);
     markAsOnline(user.id);
 
     res.status(201).json({

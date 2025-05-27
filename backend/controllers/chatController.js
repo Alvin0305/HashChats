@@ -1,4 +1,5 @@
 import pool from "../db.js";
+import { findUserByEmail } from "../models/userModel.js";
 
 export const createChat = async (req, res) => {
   const created_by = req.user.id;
@@ -45,6 +46,67 @@ export const createChat = async (req, res) => {
   }
 };
 
+export const addMemberToChat = async (req, res) => {
+  const { chat_id, email } = req.body;
+  try {
+    const user = await findUserByEmail(email);
+    if (!user) return res.status(404).json({ error: "User not found" });
+    const { rows } = await pool.query(
+      `INSERT INTO chat_members (chat_id, user_id)
+      VALUES ($1, $2)
+      RETURNING *`,
+      [chat_id, user.id]
+    );
+    res.json(rows[0]);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: `Insertion failed due to: ${err.message}` });
+  }
+};
+
+export const removeMemberFromChat = async (req, res) => {
+  const { chat_id, email } = req.body;
+  try {
+    const user = await findUserByEmail(email);
+    if (!user) return res.status(404).json({ error: "User not found" });
+    const { rows } = await pool.query(
+      `DELETE FROM chat_members
+      WHERE chat_id = $1 AND user_id = $2
+      RETURNING *
+      `,
+      [chat_id, user.id]
+    );
+    if (rows.length === 0)
+      return res.status(401).json({ error: "Failed to delete" });
+    res.json({ message: "Deleted successfully" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: `Deletion failed due to: ${err.message}` });
+  }
+};
+
+export const updateChat = async (req, res) => {
+  const { id } = req.params;
+  const { description, name } = req.body;
+  console.log(id, description, name);
+  try {
+    const { rows } = await pool.query(
+      `UPDATE chats 
+      SET description = $1,
+      name = $2
+      WHERE id = $3
+      RETURNING *
+      `,
+      [description, name, id]
+    );
+    if (!rows) return res.status(404).json({ error: "Chat not found" });
+    res.json(rows[0]);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: `Updation failed due to ${err.message}` });
+  }
+};
+
 export const getUserChats = async (req, res) => {
   const userId = req.user.id;
 
@@ -58,6 +120,32 @@ export const getUserChats = async (req, res) => {
             WHERE c.id IN (
                 SELECT chat_id FROM chat_members WHERE user_id = $1
             )
+            GROUP BY c.id
+            ORDER BY c.created_at DESC
+            `,
+      [userId]
+    );
+    res.json(rows);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: `Server error: ${err.message}` });
+  }
+};
+
+export const getUserGroups = async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const { rows } = await pool.query(
+      `
+            SELECT c.*, json_agg(u.*) AS members
+            FROM chats c
+            JOIN chat_members cm ON cm.chat_id = c.id
+            JOIN users u ON u.id = cm.user_id
+            WHERE c.id IN (
+                SELECT chat_id FROM chat_members WHERE user_id = $1
+            )
+            AND c.is_group = TRUE
             GROUP BY c.id
             ORDER BY c.created_at DESC
             `,
@@ -106,5 +194,16 @@ export const fetchMediaInChat = async (req, res) => {
     res
       .status(500)
       .json({ error: `fetching media failed due to ${err.message}` });
+  }
+};
+
+export const deleteAllMessagesInChat = async (req, res) => {
+  const { id } = req.params;
+  try {
+    await pool.query(`DELETE FROM messages WHERE chat_id = $1`, [id]);
+    res.json({ message: "Deletion successful" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: `deletion failed due to ${err.message}` });
   }
 };
