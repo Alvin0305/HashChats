@@ -191,11 +191,54 @@ export const configureSockets = (io) => {
 
     // ------- call socket connections -----------
 
+    // In socket.js, inside 'call_user' handler
     socket.on("call_user", ({ calleeId, offer, from, call_type }) => {
+      console.log(
+        `[SERVER] Received 'call_user'. To calleeId: ${calleeId}, From: ${from}, Type: ${call_type}`
+      );
       const calleeSocketId = connectedUsers.get(calleeId);
-      console.log("calling user", calleeId);
+      console.log(
+        `[SERVER] Looked up calleeSocketId for ${calleeId}: ${calleeSocketId}`
+      );
+      console.log(
+        "[SERVER] Current connectedUsers map:",
+        JSON.stringify(Array.from(connectedUsers.entries()))
+      );
+
       if (calleeSocketId) {
+        console.log(
+          `[SERVER] Emitting 'incoming_call' to calleeSocketId: ${calleeSocketId}. From: ${from}, Type: ${call_type}`
+        );
         io.to(calleeSocketId).emit("incoming_call", { from, offer, call_type });
+      } else {
+        console.log(
+          `[SERVER] CalleeId ${calleeId} not found in connectedUsers. Cannot route 'incoming_call'.`
+        );
+      }
+    });
+
+    // Optional: Add 'from' to ice_candidate emit for easier client-side debugging if needed
+    socket.on("ice_candidate", ({ to, candidate, from }) => {
+      // Expect 'from' if client sends it
+      console.log(
+        `[SERVER] Received 'ice_candidate'. To: ${to}, From: ${
+          from || "unknown"
+        }.`
+      );
+      const targetSocketId = connectedUsers.get(to);
+      if (targetSocketId) {
+        console.log(
+          `[SERVER] Emitting 'ice_candidate' to targetSocketId: ${targetSocketId}. Candidate from: ${
+            from || "unknown"
+          }`
+        );
+        // Forward 'from' if you want the client to know who the candidate came from, though usually not strictly needed
+        // as the client already knows its remote peer.
+        io.to(targetSocketId).emit("ice_candidate", { candidate, from });
+      } else {
+        console.log(
+          `[SERVER] TargetId ${to} for 'ice_candidate' not found in connectedUsers.`
+        );
       }
     });
 
@@ -231,14 +274,6 @@ export const configureSockets = (io) => {
         }
       }
     );
-
-    socket.on("ice_candidate", ({ to, candidate }) => {
-      console.log("ice candidate");
-      const targetSocketId = connectedUsers.get(to);
-      if (targetSocketId) {
-        io.to(targetSocketId).emit("ice_candidate", { candidate });
-      }
-    });
 
     socket.on("call_ended", async ({ from, to }) => {
       console.log("call ended");

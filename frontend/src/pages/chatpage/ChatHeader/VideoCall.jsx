@@ -1,219 +1,368 @@
 import React, { useEffect, useRef, useState } from "react";
-import socket from "../../../sockets";
+import socket from "../../../sockets"; // Assuming this is your configured socket instance
 import { FaPhoneSlash, FaVideoSlash, FaVolumeMute } from "react-icons/fa";
 import "./videocall.css";
-import { useUser } from "../../../contexts/userContext";
+// import { useUser } from "../../../contexts/userContext"; // Not strictly needed if localUserId is passed
 
 const VideoCall = ({
   localUserId,
   remoteUserId,
   isCaller,
-  receivedOffer,
+  receivedOffer, // This is the offer object if this user is the callee
   onClose,
 }) => {
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
   const peerConnectionRef = useRef(null);
   const localStreamRef = useRef(null);
-  const socketEventsAttached = useRef(false);
+  const iceCandidateQueueRef = useRef([]); // Queue for early ICE candidates
+  // const { user } = useUser(); // Using localUserId prop instead for clarity
 
-  const { user } = useUser();
+  // Debugging prefix for console logs
+  const logPrefix = isCaller
+    ? `[CALLER: ${localUserId}]`
+    : `[CALLEE: ${localUserId}]`;
 
   useEffect(() => {
+    console.log(
+      `${logPrefix} VideoCall component mounted/updated. isCaller: ${isCaller}, localUserId: ${localUserId}, remoteUserId: ${remoteUserId}, receivedOffer:`,
+      receivedOffer ? "Yes" : "No"
+    );
+
     const iceServers = {
       iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
     };
 
-    const startCall = async () => {
+    const initializePeerConnection = () => {
+      if (peerConnectionRef.current) {
+        console.log(
+          `${logPrefix} PeerConnection already exists. Closing existing one.`
+        );
+        peerConnectionRef.current.close();
+      }
+      const peer = new RTCPeerConnection(iceServers);
+      peerConnectionRef.current = peer;
+      console.log(`${logPrefix} New RTCPeerConnection created.`);
+
+      peer.onicecandidate = (event) => {
+        if (event.candidate) {
+          console.log(
+            `${logPrefix} Generated ICE candidate, sending to ${remoteUserId}:`,
+            event.candidate
+          );
+          socket.emit("ice_candidate", {
+            to: remoteUserId,
+            candidate: event.candidate,
+            from: localUserId, // Good to include 'from' for debugging on server
+          });
+        } else {
+          console.log(`${logPrefix} All ICE candidates have been sent.`);
+        }
+      };
+
+      peer.ontrack = (event) => {
+        console.log(
+          `${logPrefix} Received remote track:`,
+          event.track,
+          "Streams:",
+          event.streams
+        );
+        if (remoteVideoRef.current && event.streams && event.streams[0]) {
+          remoteVideoRef.current.srcObject = event.streams[0];
+          console.log(`${logPrefix} Assigned remote stream to remoteVideoRef.`);
+        } else {
+          console.warn(
+            `${logPrefix} remoteVideoRef or event.streams[0] is not available for ontrack.`
+          );
+        }
+      };
+
+      peer.oniceconnectionstatechange = () => {
+        if (peerConnectionRef.current) {
+          console.log(
+            `${logPrefix} ICE Connection State: ${peerConnectionRef.current.iceConnectionState}`
+          );
+        }
+      };
+      peer.onconnectionstatechange = () => {
+        if (peerConnectionRef.current) {
+          console.log(
+            `${logPrefix} Connection State: ${peerConnectionRef.current.connectionState}`
+          );
+        }
+      };
+      peer.onsignalingstatechange = () => {
+        if (peerConnectionRef.current) {
+          console.log(
+            `${logPrefix} Signaling State: ${peerConnectionRef.current.signalingState}`
+          );
+        }
+      };
+    };
+
+    const startCallFlow = async () => {
+      console.log(`${logPrefix} Starting call flow.`);
       try {
+        if (!localUserId || !remoteUserId) {
+          console.error(
+            `${logPrefix} localUserId or remoteUserId is missing. Aborting call flow. local: ${localUserId}, remote: ${remoteUserId}`
+          );
+          onClose(); // Close if essential IDs are missing
+          return;
+        }
+
+        initializePeerConnection(); // Ensure peer connection is fresh
+        const peer = peerConnectionRef.current;
+
+        console.log(`${logPrefix} Requesting user media (video & audio).`);
         const localStream = await navigator.mediaDevices.getUserMedia({
           video: true,
           audio: true,
         });
-
-        localVideoRef.current.srcObject = localStream;
         localStreamRef.current = localStream;
+        console.log(`${logPrefix} Got local stream:`, localStream);
 
-        const peer = new RTCPeerConnection(iceServers);
-        peerConnectionRef.current = peer;
-
-        peer.ontrack = (event) => {
-          if (remoteVideoRef.current) {
-            remoteVideoRef.current.srcObject = event.streams[0];
-          }
-        };
-
-        peer.onicecandidate = (event) => {
-          if (event.candidate) {
-            socket.emit("ice_candidate", {
-              to: remoteUserId,
-              candidate: event.candidate,
-            });
-          }
-        };
+        if (localVideoRef.current) {
+          localVideoRef.current.srcObject = localStream;
+          console.log(`${logPrefix} Assigned local stream to localVideoRef.`);
+        } else {
+          console.warn(
+            `${logPrefix} localVideoRef is null when trying to set srcObject.`
+          );
+        }
 
         localStream.getTracks().forEach((track) => {
+          console.log(
+            `${logPrefix} Adding local track to peer connection:`,
+            track.kind
+          );
           peer.addTrack(track, localStream);
         });
 
-        // ✅ Only create an offer if caller
         if (isCaller) {
+          console.log(`${logPrefix} Is CALLER. Creating offer.`);
           const offer = await peer.createOffer();
+          console.log(`${logPrefix} Offer created. Setting local description.`);
           await peer.setLocalDescription(offer);
+          console.log(
+            `${logPrefix} Local description (offer) set. SignalingState: ${peer.signalingState}. Emitting 'call_user' to ${remoteUserId}.`
+          );
           socket.emit("call_user", {
             calleeId: remoteUserId,
             from: localUserId,
-            offer,
+            offer: offer, // Send the offer object directly
             call_type: "video",
           });
         } else if (receivedOffer) {
-          if (!peerConnectionRef.current) {
-            console.error(
-              "Callee: Peer connection not ready for received offer"
-            );
-            return;
-          }
-          const peer = peerConnectionRef.current;
           console.log(
-            "Callee: Setting remote description with received offer",
+            `${logPrefix} Is CALLEE. Processing received offer from ${remoteUserId}:`,
             receivedOffer
+          );
+          console.log(
+            `${logPrefix} Setting remote description (offer). SignalingState before: ${peer.signalingState}`
           );
           await peer.setRemoteDescription(
             new RTCSessionDescription(receivedOffer)
           );
+          console.log(
+            `${logPrefix} Remote description (offer) set. SignalingState: ${peer.signalingState}. Creating answer.`
+          );
           const answer = await peer.createAnswer();
+          console.log(
+            `${logPrefix} Answer created. Setting local description (answer).`
+          );
           await peer.setLocalDescription(answer);
-
-          console.log("Callee: emiting answer call to", remoteUserId);
-
+          console.log(
+            `${logPrefix} Local description (answer) set. SignalingState: ${peer.signalingState}. Emitting 'answer_call' to ${remoteUserId}.`
+          );
           socket.emit("answer_call", {
-            callerId: remoteUserId,
-            answer,
-            calleeId: localUserId,
+            callerId: remoteUserId, // The original caller
+            answer: answer, // Send the answer object directly
+            calleeId: localUserId, // This user (the callee)
             call_type: "video",
           });
+          // Process any queued ICE candidates now that remote description is set
+          processIceCandidateQueue();
         }
       } catch (err) {
-        console.error("Error starting call:", err);
+        console.error(`${logPrefix} Error in startCallFlow:`, err);
+        onClose(); // Close on critical error
       }
     };
 
+    const processIceCandidateQueue = () => {
+      if (
+        peerConnectionRef.current &&
+        peerConnectionRef.current.remoteDescription
+      ) {
+        console.log(
+          `${logPrefix} Processing ICE candidate queue. Queue length: ${iceCandidateQueueRef.current.length}`
+        );
+        while (iceCandidateQueueRef.current.length > 0) {
+          const candidate = iceCandidateQueueRef.current.shift();
+          console.log(`${logPrefix} Applying queued ICE candidate:`, candidate);
+          peerConnectionRef.current
+            .addIceCandidate(new RTCIceCandidate(candidate))
+            .catch((e) =>
+              console.error(
+                `${logPrefix} Error adding queued ICE candidate:`,
+                e
+              )
+            );
+        }
+      } else {
+        console.log(
+          `${logPrefix} Cannot process ICE queue yet, remoteDescription not set or peer connection not ready.`
+        );
+      }
+    };
+
+    // --- Socket Event Handlers ---
     const handleCallAnswered = async ({ answer }) => {
-      if (!isCaller || !peerConnectionRef.current) {
-        // Only caller processes answer
-        if (!isCaller)
-          console.log("VideoCall: Callee received call_answered, ignoring.");
+      if (!isCaller) {
+        console.log(
+          `${logPrefix} Received 'call_answered' but not the caller. Ignoring.`
+        );
         return;
       }
-      console.log("VideoCall (Caller): Received call_answered", answer);
-      const peer = peerConnectionRef.current;
-      if (peer.signalingState !== "have-local-offer") {
-        console.warn(
-          "VideoCall (Caller): Received answer but signalingState is not 'have-local-offer'. Current state:",
-          peer.signalingState
+      if (!peerConnectionRef.current) {
+        console.error(
+          `${logPrefix} 'call_answered' received, but peerConnection is null.`
         );
-        // Might need to queue the answer if candidates are still being processed, or if order is off.
-        // For now, let's assume it should be in this state.
+        return;
       }
+      console.log(
+        `${logPrefix} Received 'call_answered' from ${remoteUserId}:`,
+        answer
+      );
+      const peer = peerConnectionRef.current;
+      console.log(
+        `${logPrefix} Setting remote description (answer). SignalingState before: ${peer.signalingState}`
+      );
       try {
         await peer.setRemoteDescription(new RTCSessionDescription(answer));
         console.log(
-          "VideoCall (Caller): Remote description (answer) set successfully."
+          `${logPrefix} Remote description (answer) set successfully. SignalingState: ${peer.signalingState}`
         );
+        // Process any queued ICE candidates now that remote description is set
+        processIceCandidateQueue();
       } catch (err) {
         console.error(
-          "VideoCall (Caller): Error setting remote description (answer):",
+          `${logPrefix} Error setting remote description (answer):`,
           err
         );
       }
     };
 
-    const handleIceCandidate = async ({ candidate }) => {
-      if (candidate && peerConnectionRef.current) {
+    const handleIceCandidate = async ({ candidate, from }) => {
+      // Expect 'from' if server sends it
+      if (!peerConnectionRef.current) {
+        console.error(
+          `${logPrefix} Received 'ice_candidate' from ${from}, but peerConnection is null.`
+        );
+        return;
+      }
+      if (candidate) {
+        console.log(
+          `${logPrefix} Received 'ice_candidate' from ${from || "unknown"}:`,
+          candidate
+        );
         try {
-          // Ensure remote description is set before adding candidates
+          // Queue candidate if remote description isn't set yet
           if (!peerConnectionRef.current.remoteDescription) {
             console.warn(
-              "VideoCall: Received ICE candidate but remoteDescription is null. Queuing or ignoring.",
-              candidate
+              `${logPrefix} Remote description not yet set. Queuing ICE candidate from ${
+                from || "unknown"
+              }.`
             );
-            // You might need to implement a queue for candidates received too early.
-            // For simplicity now, we'll just log and attempt.
-            // A robust solution queues candidates and applies them after remoteDescription is set.
+            iceCandidateQueueRef.current.push(candidate);
+            return;
           }
-          console.log("VideoCall: Adding received ICE candidate", candidate);
           await peerConnectionRef.current.addIceCandidate(
             new RTCIceCandidate(candidate)
           );
+          console.log(
+            `${logPrefix} Successfully added received ICE candidate from ${
+              from || "unknown"
+            }.`
+          );
         } catch (err) {
           console.error(
-            "VideoCall: Error adding received ICE candidate:",
+            `${logPrefix} Error adding received ICE candidate from ${
+              from || "unknown"
+            }:`,
             err,
             "Candidate:",
-            candidate,
-            "Remote Description:",
-            peerConnectionRef.current.remoteDescription
+            candidate
           );
         }
       }
     };
 
-    const handleEndCall = () => {
-      console.log("VideoCall: Received end_call signal.");
+    const handleEndCallSignal = () => {
+      console.log(`${logPrefix} Received 'end_call' signal.`);
       onClose();
     };
 
-    // Attach socket events once
-    if (!socketEventsAttached.current) {
-      socketEventsAttached.current = true;
+    // Attach socket event listeners
+    // Note: socketEventsAttached.current is not used here as useEffect's cleanup
+    // handles removing listeners correctly on unmount or re-run.
+    console.log(
+      `${logPrefix} Attaching socket listeners: call_answered, ice_candidate, end_call`
+    );
+    socket.on("call_answered", handleCallAnswered);
+    socket.on("ice_candidate", handleIceCandidate);
+    socket.on("end_call", handleEndCallSignal);
 
-      // REMOVED: socket.on("incoming_call", ...) - This was the problematic one here.
+    startCallFlow();
 
-      socket.on("call_answered", handleCallAnswered);
-      socket.on("ice_candidate", handleIceCandidate);
-      socket.on("end_call", handleEndCall);
-    }
-
-    // Start the call
-    startCall();
-
+    // Cleanup function
     return () => {
-      localStreamRef.current?.getTracks().forEach((track) => track.stop());
+      console.log(`${logPrefix} VideoCall component unmounting. Cleaning up.`);
+      localStreamRef.current?.getTracks().forEach((track) => {
+        console.log(`${logPrefix} Stopping local track:`, track.kind);
+        track.stop();
+      });
       if (peerConnectionRef.current) {
+        console.log(`${logPrefix} Closing RTCPeerConnection.`);
         peerConnectionRef.current.close();
         peerConnectionRef.current = null;
       }
+      iceCandidateQueueRef.current = []; // Clear queue
 
-      // REMOVED: socket.off("incoming_call");
+      console.log(
+        `${logPrefix} Detaching socket listeners: call_answered, ice_candidate, end_call`
+      );
       socket.off("call_answered", handleCallAnswered);
       socket.off("ice_candidate", handleIceCandidate);
-      socket.off("end_call", handleEndCall);
-      socketEventsAttached.current = false; // Reset for potential remount if component allows
+      socket.off("end_call", handleEndCallSignal);
     };
-  }, [isCaller, localUserId, remoteUserId, receivedOffer, onClose]);
+  }, [isCaller, localUserId, remoteUserId, receivedOffer, onClose]); // Props that trigger re-run
 
+  // UI State
+  const [audioEnabled, setAudioEnabled] = useState(true);
+  const [videoEnabled, setVideoEnabled] = useState(true);
   const iconSize = 20;
 
   const toggleAudio = () => {
-    const audioTracks = localStreamRef.current?.getAudioTracks();
-    if (audioTracks && audioTracks.length > 0) {
-      const enabled = !audioTracks[0].enabled;
-      audioTracks[0].enabled = enabled;
-      setAudioEnabled(enabled);
-    }
+    localStreamRef.current?.getAudioTracks().forEach((track) => {
+      track.enabled = !track.enabled;
+      setAudioEnabled(track.enabled);
+      console.log(
+        `${logPrefix} Audio ${track.enabled ? "enabled" : "disabled"}`
+      );
+    });
   };
 
   const toggleVideo = () => {
-    const videoTracks = localStreamRef.current.getVideoTracks();
-    if (videoTracks && videoTracks.length > 0) {
-      const enabled = !videoTracks[0].enabled;
-      videoTracks[0].enabled = enabled;
-      setVideoEnabled(enabled);
-    }
+    localStreamRef.current?.getVideoTracks().forEach((track) => {
+      track.enabled = !track.enabled;
+      setVideoEnabled(track.enabled);
+      console.log(
+        `${logPrefix} Video ${track.enabled ? "enabled" : "disabled"}`
+      );
+    });
   };
-
-  const [audioEnabled, setAudioEnabled] = useState(true);
-  const [videoEnabled, setVideoEnabled] = useState(true);
 
   return (
     <div className="video-call-container">
@@ -224,12 +373,18 @@ const VideoCall = ({
           muted
           playsInline
           className="video-local"
+          onLoadedMetadata={() =>
+            console.log(`${logPrefix} Local video metadata loaded.`)
+          }
         />
         <video
           ref={remoteVideoRef}
           autoPlay
           playsInline
           className="video-remote"
+          onLoadedMetadata={() =>
+            console.log(`${logPrefix} Remote video metadata loaded.`)
+          }
         />
       </div>
       <div className="video-call-buttons-div">
@@ -248,7 +403,10 @@ const VideoCall = ({
           />
         </button>
         <button
-          onClick={onClose}
+          onClick={() => {
+            console.log(`${logPrefix} Hang up button clicked.`);
+            onClose(); // This should trigger the call_ended emit via ChatHeader's onCut
+          }}
           className="video-call-button video-call-end-button"
         >
           <FaPhoneSlash
