@@ -94,12 +94,19 @@ const ChatHeader = ({ user, chat, setShowChatDetails }) => {
       };
       fetchIncomingUserDetails();
     };
-    socket.on("incoming_call", handleIncomingCall);
 
-    socket.on("end_call", () => {
-      console.log("end call request");
+    const handleEndCall = () => {
+      console.log("ChatHeader: end_call event received, closing call UI.");
       close();
-    });
+    };
+
+    socket.on("incoming_call", handleIncomingCall);
+    socket.on("end_call", handleEndCall);
+
+    return () => {
+      socket.off("incoming_call", handleIncomingCall);
+      socket.off("end_call", handleEndCall);
+    };
   }, [user?.token]);
 
   const close = () => {
