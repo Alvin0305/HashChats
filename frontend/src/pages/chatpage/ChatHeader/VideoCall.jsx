@@ -1,24 +1,21 @@
 import React, { useEffect, useRef, useState } from "react";
-import socket from "../../../sockets"; // Assuming this is your configured socket instance
+import socket from "../../../sockets";
 import { FaPhoneSlash, FaVideoSlash, FaVolumeMute } from "react-icons/fa";
 import "./videocall.css";
-// import { useUser } from "../../../contexts/userContext"; // Not strictly needed if localUserId is passed
 
 const VideoCall = ({
   localUserId,
   remoteUserId,
   isCaller,
-  receivedOffer, // This is the offer object if this user is the callee
+  receivedOffer,
   onClose,
 }) => {
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
   const peerConnectionRef = useRef(null);
   const localStreamRef = useRef(null);
-  const iceCandidateQueueRef = useRef([]); // Queue for early ICE candidates
-  // const { user } = useUser(); // Using localUserId prop instead for clarity
+  const iceCandidateQueueRef = useRef([]);
 
-  // Debugging prefix for console logs
   const logPrefix = isCaller
     ? `[CALLER: ${localUserId}]`
     : `[CALLEE: ${localUserId}]`;
@@ -53,7 +50,7 @@ const VideoCall = ({
           socket.emit("ice_candidate", {
             to: remoteUserId,
             candidate: event.candidate,
-            from: localUserId, // Good to include 'from' for debugging on server
+            from: localUserId,
           });
         } else {
           console.log(`${logPrefix} All ICE candidates have been sent.`);
@@ -107,11 +104,11 @@ const VideoCall = ({
           console.error(
             `${logPrefix} localUserId or remoteUserId is missing. Aborting call flow. local: ${localUserId}, remote: ${remoteUserId}`
           );
-          onClose(); // Close if essential IDs are missing
+          onClose();
           return;
         }
 
-        initializePeerConnection(); // Ensure peer connection is fresh
+        initializePeerConnection();
         const peer = peerConnectionRef.current;
 
         console.log(`${logPrefix} Requesting user media (video & audio).`);
@@ -150,7 +147,7 @@ const VideoCall = ({
           socket.emit("call_user", {
             calleeId: remoteUserId,
             from: localUserId,
-            offer: offer, // Send the offer object directly
+            offer: offer,
             call_type: "video",
           });
         } else if (receivedOffer) {
@@ -176,17 +173,17 @@ const VideoCall = ({
             `${logPrefix} Local description (answer) set. SignalingState: ${peer.signalingState}. Emitting 'answer_call' to ${remoteUserId}.`
           );
           socket.emit("answer_call", {
-            callerId: remoteUserId, // The original caller
-            answer: answer, // Send the answer object directly
-            calleeId: localUserId, // This user (the callee)
+            callerId: remoteUserId,
+            answer: answer,
+            calleeId: localUserId,
             call_type: "video",
           });
-          // Process any queued ICE candidates now that remote description is set
+
           processIceCandidateQueue();
         }
       } catch (err) {
         console.error(`${logPrefix} Error in startCallFlow:`, err);
-        onClose(); // Close on critical error
+        onClose();
       }
     };
 
@@ -217,7 +214,6 @@ const VideoCall = ({
       }
     };
 
-    // --- Socket Event Handlers ---
     const handleCallAnswered = async ({ answer }) => {
       if (!isCaller) {
         console.log(
@@ -244,7 +240,7 @@ const VideoCall = ({
         console.log(
           `${logPrefix} Remote description (answer) set successfully. SignalingState: ${peer.signalingState}`
         );
-        // Process any queued ICE candidates now that remote description is set
+
         processIceCandidateQueue();
       } catch (err) {
         console.error(
@@ -255,7 +251,6 @@ const VideoCall = ({
     };
 
     const handleIceCandidate = async ({ candidate, from }) => {
-      // Expect 'from' if server sends it
       if (!peerConnectionRef.current) {
         console.error(
           `${logPrefix} Received 'ice_candidate' from ${from}, but peerConnection is null.`
@@ -268,7 +263,6 @@ const VideoCall = ({
           candidate
         );
         try {
-          // Queue candidate if remote description isn't set yet
           if (!peerConnectionRef.current.remoteDescription) {
             console.warn(
               `${logPrefix} Remote description not yet set. Queuing ICE candidate from ${
@@ -304,9 +298,6 @@ const VideoCall = ({
       onClose();
     };
 
-    // Attach socket event listeners
-    // Note: socketEventsAttached.current is not used here as useEffect's cleanup
-    // handles removing listeners correctly on unmount or re-run.
     console.log(
       `${logPrefix} Attaching socket listeners: call_answered, ice_candidate, end_call`
     );
@@ -316,7 +307,6 @@ const VideoCall = ({
 
     startCallFlow();
 
-    // Cleanup function
     return () => {
       console.log(`${logPrefix} VideoCall component unmounting. Cleaning up.`);
       localStreamRef.current?.getTracks().forEach((track) => {
@@ -328,7 +318,7 @@ const VideoCall = ({
         peerConnectionRef.current.close();
         peerConnectionRef.current = null;
       }
-      iceCandidateQueueRef.current = []; // Clear queue
+      iceCandidateQueueRef.current = [];
 
       console.log(
         `${logPrefix} Detaching socket listeners: call_answered, ice_candidate, end_call`
@@ -337,9 +327,8 @@ const VideoCall = ({
       socket.off("ice_candidate", handleIceCandidate);
       socket.off("end_call", handleEndCallSignal);
     };
-  }, [isCaller, localUserId, remoteUserId, receivedOffer, onClose]); // Props that trigger re-run
+  }, [isCaller, localUserId, remoteUserId, receivedOffer, onClose]);
 
-  // UI State
   const [audioEnabled, setAudioEnabled] = useState(true);
   const [videoEnabled, setVideoEnabled] = useState(true);
   const iconSize = 20;
@@ -405,7 +394,7 @@ const VideoCall = ({
         <button
           onClick={() => {
             console.log(`${logPrefix} Hang up button clicked.`);
-            onClose(); // This should trigger the call_ended emit via ChatHeader's onCut
+            onClose();
           }}
           className="video-call-button video-call-end-button"
         >
