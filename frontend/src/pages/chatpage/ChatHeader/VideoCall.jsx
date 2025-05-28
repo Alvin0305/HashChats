@@ -4,7 +4,13 @@ import { FaPhoneSlash, FaVideoSlash, FaVolumeMute } from "react-icons/fa";
 import "./videocall.css";
 import { useUser } from "../../../contexts/userContext";
 
-const VideoCall = ({ localUserId, remoteUserId, isCaller, onClose }) => {
+const VideoCall = ({
+  localUserId,
+  remoteUserId,
+  isCaller,
+  receivedOffer,
+  onClose,
+}) => {
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
   const peerConnectionRef = useRef(null);
@@ -60,10 +66,59 @@ const VideoCall = ({ localUserId, remoteUserId, isCaller, onClose }) => {
             offer,
             call_type: "video",
           });
+        } else if (receivedOffer) {
+          if (!peerConnectionRef.current) {
+            console.error(
+              "Callee: Peer connection not ready for received offer"
+            );
+            return;
+          }
+          const peer = peerConnectionRef.current;
+          console.log(
+            "Callee: Setting remote description with received offer",
+            receivedOffer
+          );
+          await peer.setRemoteDescription(
+            new RTCSessionDescription(receivedOffer)
+          );
+          const answer = await peer.createAnswer();
+          await peer.setLocalDescription(answer);
+
+          console.log("Callee: emiting answer call to", remoteUserId);
+
+          socket.emit("answer_call", {
+            callerId: remoteUserId,
+            answer,
+            calleeId: localUserId,
+            call_type: "video",
+          });
         }
       } catch (err) {
         console.error("Error starting call:", err);
       }
+    };
+
+    const handleCallAnswered = async ({ answer }) => {
+      if (!peerConnectionRef.current) {
+        console.log("peerConnectionRef.current is null");
+        return;
+      }
+
+      const peer = peerConnectionRef.current;
+      await peer.setRemoteDescription(new RTCSessionDescription(answer));
+    };
+
+    const handleIceCandidate = ({ candidate }) => {
+      if (candidate && peerConnectionRef.current) {
+        peerConnectionRef.current.addIceCandidate(
+          new RTCIceCandidate(candidate)
+        );
+      }
+    };
+
+    const handleEndCall = () => {
+      console.log("call ended here also");
+      onClose();
     };
 
     // Attach socket events once
@@ -88,28 +143,9 @@ const VideoCall = ({ localUserId, remoteUserId, isCaller, onClose }) => {
         });
       });
 
-      socket.on("call_answered", async ({ answer }) => {
-        if (!peerConnectionRef.current) {
-          console.log("peerConnectionRef.current is null");
-          return;
-        }
-
-        const peer = peerConnectionRef.current;
-        await peer.setRemoteDescription(new RTCSessionDescription(answer));
-      });
-
-      socket.on("ice_candidate", ({ candidate }) => {
-        if (candidate && peerConnectionRef.current) {
-          peerConnectionRef.current.addIceCandidate(
-            new RTCIceCandidate(candidate)
-          );
-        }
-      });
-
-      socket.on("call_ended", () => {
-        console.log("call ended here also");
-        onClose();
-      });
+      socket.on("call_answered", handleCallAnswered);
+      socket.on("ice_candidate", handleIceCandidate);
+      socket.on("end_call", handleEndCall);
     }
 
     // Start the call
@@ -122,11 +158,12 @@ const VideoCall = ({ localUserId, remoteUserId, isCaller, onClose }) => {
       peerConnectionRef.current = null;
 
       socket.off("incoming_call");
-      socket.off("call_answered");
-      socket.off("ice_candidate");
+      socket.off("call_answered", handleCallAnswered);
+      socket.off("ice_candidate", handleIceCandidate);
+      socket.off("end_call", handleEndCall);
       socketEventsAttached.current = false;
     };
-  }, [isCaller, localUserId, remoteUserId]);
+  }, [isCaller, localUserId, remoteUserId, receivedOffer, onClose, user?.id]);
 
   const iconSize = 20;
 

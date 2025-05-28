@@ -195,7 +195,7 @@ export const configureSockets = (io) => {
       const calleeSocketId = connectedUsers.get(calleeId);
       console.log("calling user", calleeId);
       if (calleeSocketId) {
-        io.to(calleeSocketId).emit("incoming_call", { from, offer });
+        io.to(calleeSocketId).emit("incoming_call", { from, offer, call_type });
       }
     });
 

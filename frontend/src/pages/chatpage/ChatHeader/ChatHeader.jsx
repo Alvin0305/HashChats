@@ -57,16 +57,32 @@ const ChatHeader = ({ user, chat, setShowChatDetails }) => {
   };
 
   const connectCall = () => {
-    console.log("connected call");
-    setShowVideoCall(true);
+    console.log("connected call", incomingCallType);
+    if (incomingCallType === "video") {
+      setShowVideoCall(true);
+    } else if (incomingCallType === "audio") {
+      setShowAudioCall(true);
+    }
     setShowDialog(false);
   };
 
+  const [incomingOffer, setIncomingOffer] = useState(null);
+  const [incomingCallType, setIncomingCallType] = useState(null);
+
   useEffect(() => {
-    socket.on("incoming_call", ({ from }) => {
-      console.log("call incoming", from);
+    const handleIncomingCall = ({ from, offer, call_type }) => {
+      console.log(
+        "Chat header: incoming call from",
+        from,
+        "offer:",
+        offer,
+        "type:",
+        call_type
+      );
       setShowDialog(true);
       setIncomingCallerId(from);
+      setIncomingOffer(offer);
+      setIncomingCallType(call_type);
       const fetchIncomingUserDetails = async () => {
         try {
           const userData = await fetchUserById(from, user.token);
@@ -77,13 +93,14 @@ const ChatHeader = ({ user, chat, setShowChatDetails }) => {
         }
       };
       fetchIncomingUserDetails();
-    });
+    };
+    socket.on("incoming_call", handleIncomingCall);
 
     socket.on("end_call", () => {
       console.log("end call request");
       close();
     });
-  }, [chat]);
+  }, [user?.token]);
 
   const close = () => {
     setShowAudioCall(false);
@@ -180,10 +197,9 @@ const ChatHeader = ({ user, chat, setShowChatDetails }) => {
       {showVideoCall && (
         <VideoCall
           localUserId={user.id}
-          remoteUserId={
-            chat.is_group ? null : chat.members.find((m) => m.id !== user.id).id
-          }
-          isCaller={!showDialog}
+          remoteUserId={incomingCallerId}
+          isCaller={false}
+          receivedOffer={incomingOffer}
           onClose={onCut}
         />
       )}
