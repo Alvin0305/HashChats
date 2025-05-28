@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { registerUser } from "../../../services/authService";
 import { useUser } from "../../../contexts/userContext";
 import { useTab } from "../../../contexts/tabContext";
+import { toast } from "react-toastify";
 
 const RegisterPage = () => {
   const [userData, setUserData] = useState({
@@ -26,6 +27,11 @@ const RegisterPage = () => {
       navigate("/chat");
       setCurrentTab("chat-list");
     } catch (err) {
+      if (err.response && err.response.status === 400) {
+        toast.error("This Email Already have an account");
+      } else {
+        toast.error("Unhandled Error occured");
+      }
       console.error(err);
     }
   };

@@ -46,7 +46,8 @@ const ChatList = ({ user }) => {
                 u.members[1].id === response.data.id) ||
                 (u.members[1].id === user.id &&
                   u.members[0].id === response.data.id)) &&
-              u.members.length === 2
+              u.members.length === 2 &&
+              !isGroup
           )
         ) {
           console.log("you both already have a chat");

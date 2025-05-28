@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { loginUser } from "../../../services/authService";
 import { useUser } from "../../../contexts/userContext";
 import { useTab } from "../../../contexts/tabContext";
+import { toast } from "react-toastify";
 
 const LoginPage = () => {
   const [userData, setUserData] = useState({ email: "", password: "" });
@@ -22,6 +23,13 @@ const LoginPage = () => {
       navigate("/chat");
       setCurrentTab("chat-list");
     } catch (err) {
+      if (err.response && err.response.status === 404) {
+        toast.error("Invalid Email");
+      } else if (err.response && err.response.status === 401) {
+        toast.error("Invalid Password");
+      } else {
+        toast.error("Unhandled Error occured");
+      }
       console.error(err);
     }
   };

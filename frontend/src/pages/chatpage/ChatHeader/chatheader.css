@@ -60,48 +60,85 @@
 }
 
 .call-dialog {
-    position: absolute;
+    position: fixed; /* Changed from absolute to fixed */
     top: 50%;
     left: 50%;
-    transform: translateX(-50%);
-    transform: translateY(-50%);
-
+    transform: translate(-50%, -50%); /* Combined transforms */
     background-color: var(--color-tertiary);
-    padding: 10px;
+    padding: 20px; /* Increased padding a bit for better feel */
     display: flex;
-    border-radius: 5px;
+    border-radius: 10px; /* Slightly larger radius */
     flex-direction: column;
     justify-content: center;
     gap: 20px;
-    z-index: 100;
-}
-
-.call-dialog-buttons {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-}
-
-.call-dialog-button {
-    padding: 20px;
-    border-radius: 50%;
-    border: none;
-    cursor: pointer;
-    background-color: transparent;
-    border: 1px solid var(--color-primary);
-    transition: all 0.2s ease-in-out;
-}
-
-.call-dialog-button:hover {
-    background-color: var(--color-primary);
-}
-
-.call-dialog-button:hover .call-icon {
-    transform: scale(1.5);
+    z-index: 1000; /* Ensure it's above other elements, increased z-index */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); /* Added a subtle shadow for depth */
+    /* Add min-width and max-width for responsiveness */
+    min-width: 280px; /* Don't let it get too small on narrow screens */
+    max-width: 90%;   /* Don't let it exceed 90% of screen width */
+    box-sizing: border-box; /* Ensure padding and border are included in width/height */
 }
 
 .call-dialog-caller-div {
     display: flex;
-    gap: 20px;
+    gap: 15px; /* Adjusted gap */
     align-items: center;
 }
+
+.call-dialog-caller-div img.avatar { /* Be more specific if needed */
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.call-dialog-caller-div h4 {
+    margin: 0;
+    font-size: 1.1em; /* Slightly adjust font size */
+    word-break: break-word; /* Prevent long names from breaking layout */
+}
+
+
+.call-dialog-buttons {
+    display: flex;
+    justify-content: space-around; /* Changed to space-around for better button spacing */
+    gap: 10px;
+    margin-top: 10px; /* Added some top margin */
+}
+
+.call-dialog-button {
+    padding: 15px; /* Adjusted padding */
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    background-color: transparent; /* Keep transparent or set a base color */
+    /* border: 1px solid var(--color-primary); -- Removed direct border, can add back if preferred */
+    transition: all 0.2s ease-in-out;
+    display: flex; /* For centering icon inside */
+    align-items: center; /* For centering icon inside */
+    justify-content: center; /* For centering icon inside */
+}
+
+.call-dialog-button.accept-call-button:hover {
+    background-color: rgba(0, 255, 0, 0.1); /* Light green hover */
+}
+.call-dialog-button.reject-call-button:hover {
+    background-color: rgba(255, 0, 0, 0.1); /* Light red hover */
+}
+
+
+.call-dialog-button .call-icon { /* Target icon specifically */
+    transition: transform 0.2s ease-in-out; /* Apply transform to icon */
+}
+
+.call-dialog-button:hover .call-icon {
+    transform: scale(1.2); /* Scale icon on button hover */
+}
+
+/* Ensure your root variables are defined, e.g., in :root or a parent element */
+/*
+:root {
+    --color-primary: #your-primary-color;
+    --color-tertiary: #your-tertiary-color;
+}
+*/
