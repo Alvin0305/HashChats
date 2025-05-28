@@ -220,7 +220,18 @@ const ChatRoom = ({ setShowChatDetails }) => {
 
   const { currentTab } = useTab();
 
-  if (!user) return <div>Loading...</div>;
+  if (!user)
+    return (
+      <div
+        className={`${
+          currentTab === "chat-room"
+            ? "show-in-phone-tab"
+            : "dont-show-in-phone-tab"
+        }`}
+      >
+        Loading...
+      </div>
+    );
 
   return (
     <div

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { createChat } from "../../../services/chatService";
 import ChatTile from "./ChatTile/ChatTile";
 
@@ -81,6 +81,11 @@ const ChatList = ({ user }) => {
   };
 
   const { currentTab } = useTab();
+  const chatTopRef = useRef(null);
+
+  const scrollToTop = () => {
+    chatTopRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   useEffect(() => {
     console.log(currentTab);
@@ -96,6 +101,7 @@ const ChatList = ({ user }) => {
           : "dont-show-in-phone-tab"
       }`}
     >
+      <div ref={chatTopRef} />
       <div className="chatlist-top">
         <h2 className="m0"># CHATS</h2>
       </div>
@@ -145,7 +151,10 @@ const ChatList = ({ user }) => {
       ))}
       <button
         className="add-chat-button"
-        onClick={() => setShowAddChatDialog(true)}
+        onClick={() => {
+          setShowAddChatDialog(true);
+          scrollToTop();
+        }}
       >
         <FaPlus className="add-chat-icon" size={24} />
       </button>

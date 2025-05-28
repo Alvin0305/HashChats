@@ -101,26 +101,28 @@ const ChatHeader = ({ user, chat, setShowChatDetails }) => {
 
   return (
     <div className="chat-header">
-      <div
-        className="chat-header-img-name-div"
-        onClick={() => {
-          setShowChatDetails(true);
-          setCurrentTab("chat-details")
-        }}
-      >
+      <div className="flex">
         <button
-          className={`chat-back-button show-on-phone`}
+          className={`show-on-phone chat-back-button`}
           onClick={() => setCurrentTab("chat-list")}
         >
           <FiArrowLeft className="chat-back-icon" size={24} />
         </button>
-        <img
-          src={getAvatar()}
-          alt="No internet"
-          width={imgWidth}
-          className="avatar"
-        />
-        <h3 className="chat-header-name">{getDisplayName()}</h3>
+        <div
+          className="chat-header-img-name-div"
+          onClick={() => {
+            setShowChatDetails(true);
+            setCurrentTab("chat-details");
+          }}
+        >
+          <img
+            src={getAvatar()}
+            alt="No internet"
+            width={imgWidth}
+            className="avatar"
+          />
+          <h3 className="chat-header-name">{getDisplayName()}</h3>
+        </div>
       </div>
       <div className="chat-header-icons-div">
         <FaPhone

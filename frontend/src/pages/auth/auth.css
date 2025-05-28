@@ -47,3 +47,17 @@
 .auth-link {
     color: var(--color-primary);
 }
+
+.auth-button {
+    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+}
+
+@media (max-width: 568px) {
+    .auth-form {
+        width: 100%;
+    }
+
+    .auth-container {
+        width: 80%;
+    }
+}

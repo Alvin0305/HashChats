@@ -210,7 +210,11 @@ const ChatDetails = ({ setShowChatDetails }) => {
 
   const { currentTab, setCurrentTab } = useTab();
 
-  if (!chat) return <div>Loading...</div>;
+  if (!chat) return <div className={`${
+    currentTab === "chat-details"
+      ? "show-in-phone-tab"
+      : "dont-show-in-phone-tab"
+  }`}>Loading...</div>;
 
   return (
     <form

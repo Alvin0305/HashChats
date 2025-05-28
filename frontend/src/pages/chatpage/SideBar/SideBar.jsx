@@ -9,6 +9,7 @@ import { getFavourites } from "../../../services/favouriteService";
 import { useChat } from "../../../contexts/chatContext";
 import { useNavigate } from "react-router-dom";
 import { logoutUser } from "../../../services/authService";
+import { useTab } from "../../../contexts/tabContext";
 
 const SideBar = ({ setShowProfile }) => {
   const iconSize = 20;
@@ -16,6 +17,7 @@ const SideBar = ({ setShowProfile }) => {
   const { user, setUser } = useUser();
   const { setChatList } = useChatList();
   const { setChat } = useChat();
+  const { setCurrentTab } = useTab();
 
   const navigate = useNavigate();
 
@@ -25,6 +27,7 @@ const SideBar = ({ setShowProfile }) => {
       const response = await fetchUserChats(user?.token);
       console.log(response.data);
       setChatList(response.data);
+      setCurrentTab("chat-list");      
     } catch (err) {
       console.error(err);
     }
@@ -36,6 +39,7 @@ const SideBar = ({ setShowProfile }) => {
       const response = await fetchUserGroups(user?.token);
       console.log(response.data);
       setChatList(response.data);
+      setCurrentTab("chat-list");
     } catch (err) {
       console.error(err);
     }
@@ -47,6 +51,7 @@ const SideBar = ({ setShowProfile }) => {
       const response = await getFavourites(user?.id, user?.token);
       console.log(response.data);
       setChatList(response.data);
+      setCurrentTab("chat-list");
     } catch (err) {
       console.error(err);
     }
@@ -55,6 +60,7 @@ const SideBar = ({ setShowProfile }) => {
   const handleProfileButton = () => {
     setShowProfile(true);
     setChat(null);
+    setCurrentTab("profile");
   };
 
   const handleLogout = async () => {
@@ -64,6 +70,7 @@ const SideBar = ({ setShowProfile }) => {
       console.log(response.data);
       setChatList([]);
       navigate("/");
+      setCurrentTab("login");
     } catch (err) {
       console.log("logout failed", err);
     }

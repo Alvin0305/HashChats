@@ -4,6 +4,7 @@
     justify-content: space-between;
     padding: 10px 10px;
     background-color: var(--color-tertiary);
+    box-sizing: border-box;
 }
 
 .chat-header-img-name-div {
@@ -20,6 +21,16 @@
 
 .show-on-phone {
     display: none;
+}
+
+.flex {
+    display: flex;
+}
+
+@media (max-width: 568px) {
+    .show-on-phone {
+        display: block;
+    }
 }
 
 .chat-back-icon {

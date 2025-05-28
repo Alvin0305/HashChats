@@ -3,6 +3,7 @@ import "../auth.css";
 import { useNavigate } from "react-router-dom";
 import { registerUser } from "../../../services/authService";
 import { useUser } from "../../../contexts/userContext";
+import { useTab } from "../../../contexts/tabContext";
 
 const RegisterPage = () => {
   const [userData, setUserData] = useState({
@@ -11,6 +12,7 @@ const RegisterPage = () => {
     password: "",
   });
   const { setUser } = useUser();
+  const { setCurrentTab } = useTab();
   const navigate = useNavigate();
 
   const handleRegister = async (e) => {
@@ -22,6 +24,7 @@ const RegisterPage = () => {
       setUser(response.data);
       console.log(response.data);
       navigate("/chat");
+      setCurrentTab("chat-list");
     } catch (err) {
       console.error(err);
     }
