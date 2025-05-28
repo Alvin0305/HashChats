@@ -16,6 +16,10 @@
 
 .audio-call-info {
     width: 80%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 
 .audio-call-buttons-div {

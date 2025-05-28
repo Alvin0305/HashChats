@@ -10,6 +10,7 @@ const AudioCall = ({
   isCaller,
   receivedOffer,
   onClose,
+  token,
 }) => {
   const peerConnectionRef = useRef(null);
   const localStreamRef = useRef(null);
@@ -270,7 +271,7 @@ const AudioCall = ({
   useEffect(() => {
     const fetchUserDetails = async () => {
       try {
-        const response = await fetchUserById(remoteUserId);
+        const response = await fetchUserById(remoteUserId, token);
         console.log(response.data);
         setUserData(response.data);
       } catch (err) {

@@ -237,6 +237,7 @@ const ChatHeader = ({ user, chat, setShowChatDetails }) => {
           isCaller={isInitiatingCall}
           receivedOffer={!isInitiatingCall ? incomingOffer : null}
           onClose={handleHangUp}
+          token={user.token}
         />
       )}
 
