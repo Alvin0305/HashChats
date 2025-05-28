@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from "react";
 import socket from "../../../sockets";
 import { FaPhoneSlash, FaMicrophoneSlash } from "react-icons/fa";
 import "./audiocall.css";
-import { fetchUserById } from "../../../services/userServer";
 
 const AudioCall = ({
   localUserId,
@@ -10,7 +9,8 @@ const AudioCall = ({
   isCaller,
   receivedOffer,
   onClose,
-  token,
+  avatar,
+  username,
 }) => {
   const peerConnectionRef = useRef(null);
   const localStreamRef = useRef(null);
@@ -266,21 +266,6 @@ const AudioCall = ({
     });
   };
 
-  const [userData, setUserData] = useState(null);
-
-  useEffect(() => {
-    const fetchUserDetails = async () => {
-      try {
-        const response = await fetchUserById(remoteUserId, token);
-        console.log(response.data);
-        setUserData(response.data);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    fetchUserDetails();
-  }, [remoteUserId]);
-
   return (
     <div className="audio-call-container">
       <audio ref={remoteAudioRef} autoPlay playsInline />
@@ -288,15 +273,10 @@ const AudioCall = ({
         <p>Audio Call in Progress...</p>
         <p>
           {isCaller
-            ? `Calling ${userData?.username || remoteUserId}`
-            : `Call from ${userData?.username || remoteUserId}`}
+            ? `Calling ${username || remoteUserId}`
+            : `Call from ${username || remoteUserId}`}
         </p>
-        <img
-          src={userData?.avatar}
-          alt="Avatar"
-          className="avatar"
-          width={200}
-        />
+        <img src={avatar} alt="Avatar" className="avatar" width={200} />
       </div>
       <div className="audio-call-buttons-div">
         <button onClick={toggleMic} className="audio-call-button">

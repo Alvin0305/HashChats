@@ -23,6 +23,10 @@ const ChatHeader = ({ user, chat, setShowChatDetails }) => {
     return (remoteMember && remoteMember.avatar) || "/avatar.webp";
   };
 
+  const getRemoteAvatar = () => {
+    return incomingCallerDetails?.avatar || "/avatar.webp";
+  };
+
   const [incomingCallerId, setIncomingCallerId] = useState(null);
   const [incomingCallerDetails, setIncomingCallerDetails] = useState(null);
   const [incomingOffer, setIncomingOffer] = useState(null);
@@ -237,7 +241,8 @@ const ChatHeader = ({ user, chat, setShowChatDetails }) => {
           isCaller={isInitiatingCall}
           receivedOffer={!isInitiatingCall ? incomingOffer : null}
           onClose={handleHangUp}
-          token={user.token}
+          avatar={getRemoteAvatar()}
+          username={incomingCallerDetails?.username?.toUpperCase()}
         />
       )}
 
