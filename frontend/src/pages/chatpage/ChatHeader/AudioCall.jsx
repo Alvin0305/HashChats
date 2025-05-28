@@ -1,20 +1,19 @@
 import React, { useEffect, useRef, useState } from "react";
-import socket from "../../../sockets"; // Assuming this is your configured socket instance
-import { FaPhoneSlash, FaVolumeMute, FaMicrophoneSlash } from "react-icons/fa"; // Added FaMicrophoneSlash
-import "./audiocall.css"; // You might want a separate CSS or reuse videocall.css if styles are similar
+import socket from "../../../sockets";
+import { FaPhoneSlash, FaMicrophoneSlash } from "react-icons/fa";
+import "./audiocall.css";
+import { fetchUserById } from "../../../services/userServer";
 
 const AudioCall = ({
   localUserId,
   remoteUserId,
   isCaller,
-  receivedOffer, // This is the offer object if this user is the callee
+  receivedOffer,
   onClose,
-  // You might want to pass remote user details for display
-  // remoteUserDetails, e.g., { username, avatar }
 }) => {
   const peerConnectionRef = useRef(null);
   const localStreamRef = useRef(null);
-  const remoteAudioRef = useRef(null); // For playing remote audio
+  const remoteAudioRef = useRef(null);
   const iceCandidateQueueRef = useRef([]);
 
   const logPrefix = isCaller
@@ -66,7 +65,6 @@ const AudioCall = ({
           event.streams
         );
         if (remoteAudioRef.current && event.streams && event.streams[0]) {
-          // Attach the stream to an audio element to play it
           remoteAudioRef.current.srcObject = event.streams[0];
           console.log(
             `${logPrefix} Assigned remote audio stream to remoteAudioRef.`
@@ -78,15 +76,14 @@ const AudioCall = ({
         }
       };
 
-      // Add state change listeners as in VideoCall for debugging
       peer.oniceconnectionstatechange = () => {
-        /* ... console.log ... */
+        console.log("ice connection state changed");
       };
       peer.onconnectionstatechange = () => {
-        /* ... console.log ... */
+        console.log("connection state changed");
       };
       peer.onsignalingstatechange = () => {
-        /* ... console.log ... */
+        console.log("singaling state changed");
       };
     };
 
@@ -107,12 +104,10 @@ const AudioCall = ({
         console.log(`${logPrefix} Requesting user media (audio only).`);
         const localStream = await navigator.mediaDevices.getUserMedia({
           audio: true,
-          video: false, // Explicitly false for audio call
+          video: false,
         });
         localStreamRef.current = localStream;
         console.log(`${logPrefix} Got local audio stream:`, localStream);
-
-        // No local video element to update for audio-only calls
 
         localStream.getTracks().forEach((track) => {
           console.log(
@@ -134,7 +129,7 @@ const AudioCall = ({
             calleeId: remoteUserId,
             from: localUserId,
             offer: offer,
-            call_type: "audio", // Specify call type
+            call_type: "audio",
           });
         } else if (receivedOffer) {
           console.log(
@@ -156,7 +151,7 @@ const AudioCall = ({
             callerId: remoteUserId,
             answer: answer,
             calleeId: localUserId,
-            call_type: "audio", // Specify call type
+            call_type: "audio",
           });
           processIceCandidateQueue();
         }
@@ -188,7 +183,6 @@ const AudioCall = ({
       }
     };
 
-    // --- Socket Event Handlers ---
     const handleCallAnswered = async ({ answer }) => {
       if (!isCaller) return;
       if (!peerConnectionRef.current) return;
@@ -257,9 +251,8 @@ const AudioCall = ({
     };
   }, [isCaller, localUserId, remoteUserId, receivedOffer, onClose]);
 
-  // UI State
   const [micEnabled, setMicEnabled] = useState(true);
-  // const [speakerEnabled, setSpeakerEnabled] = useState(true); // For remote audio mute/unmute
+
   const iconSize = 20;
 
   const toggleMic = () => {
@@ -272,49 +265,46 @@ const AudioCall = ({
     });
   };
 
-  // Optional: Toggle remote speaker (mutes the <audio> element)
-  // const toggleSpeaker = () => {
-  //   if (remoteAudioRef.current) {
-  //     remoteAudioRef.current.muted = !remoteAudioRef.current.muted;
-  //     setSpeakerEnabled(!remoteAudioRef.current.muted);
-  //     console.log(`${logPrefix} Remote audio speaker ${!remoteAudioRef.current.muted ? "enabled" : "disabled"}`);
-  //   }
-  // };
+  const [userData, setUserData] = useState(null);
+
+  useEffect(() => {
+    const fetchUserDetails = async () => {
+      try {
+        const response = await fetchUserById(remoteUserId);
+        console.log(response.data);
+        setUserData(response.data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchUserDetails();
+  }, [remoteUserId]);
 
   return (
     <div className="audio-call-container">
-      {" "}
-      {/* Use a different class or style videocall.css accordingly */}
-      {/* Hidden audio element for remote stream */}
       <audio ref={remoteAudioRef} autoPlay playsInline />
       <div className="audio-call-info">
-        {/* You can display info about the call here, e.g., remote user's name/avatar */}
-        {/* <img src={remoteUserDetails?.avatar || '/default-avatar.png'} alt="Remote User" /> */}
-        {/* <h4>Calling {remoteUserDetails?.username || remoteUserId}</h4> */}
         <p>Audio Call in Progress...</p>
         <p>
-          {isCaller ? `Calling ${remoteUserId}` : `Call from ${remoteUserId}`}
+          {isCaller
+            ? `Calling ${userData?.username || remoteUserId}`
+            : `Call from ${userData?.username || remoteUserId}`}
         </p>
+        <img
+          src={userData?.avatar}
+          alt="Avatar"
+          className="avatar"
+          width={200}
+        />
       </div>
       <div className="audio-call-buttons-div">
-        {" "}
-        {/* Reuse or create new styles */}
         <button onClick={toggleMic} className="audio-call-button">
-          <FaMicrophoneSlash // Or FaMicrophone if you want to show current state
+          <FaMicrophoneSlash
             className="audio-call-icon"
             size={iconSize}
             color={micEnabled ? "white" : "gray"}
           />
         </button>
-        {/* Optional Speaker Mute Button 
-        <button onClick={toggleSpeaker} className="audio-call-button">
-          <FaVolumeMute
-            className="audio-call-icon"
-            size={iconSize}
-            color={speakerEnabled ? "white" : "gray"}
-          />
-        </button>
-        */}
         <button
           onClick={() => {
             console.log(`${logPrefix} Hang up button clicked (audio).`);

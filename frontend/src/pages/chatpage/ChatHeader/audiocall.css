@@ -1,0 +1,56 @@
+.audio-call-container {
+    position: fixed;
+    top: 10%;
+    left: 10%;
+    width: 80%;
+    height: 80%;
+    background: #000;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+
+    gap: 30px;
+}
+
+.audio-call-info {
+    width: 80%;
+}
+
+.audio-call-buttons-div {
+    display: flex;
+    gap: 20px;
+}
+
+.audio-call-button {
+    padding: 20px;
+    border: 1px solid var(--color-secondary);
+    border-radius: 50%;
+    background-color: transparent;
+    transition: all 0.2s ease-in-out;
+    cursor: pointer;
+}
+
+.audio-call-buttons-div {
+    padding: 20px;
+    border-radius: 5px;
+    display: flex;
+    gap: 10px;
+    border-radius: 10px;
+    width: 400px;
+    justify-content: space-evenly;
+    background-color: var(--color-highlight);
+}
+
+.audio-call-button:hover {
+    background-color: var(--color-secondary);
+}
+
+.audio-call-button:hover .audio-call-icon {
+    color: white;
+}
+
+.audio-call-icon {
+    transition: all 0.2s ease-in-out;
+}
